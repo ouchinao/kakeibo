@@ -9,7 +9,7 @@ import { type ReflectionRepository } from "../ports/repositories.ts";
 
 export interface SaveReflectionCommand {
   readonly month: string | YearMonth;
-  readonly answers: Partial<Record<ReflectionQuestionKey, string>>;
+  readonly answers: { readonly [K in ReflectionQuestionKey]?: string | undefined };
 }
 
 /**
