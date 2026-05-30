@@ -1,4 +1,4 @@
-import { join, normalize } from "node:path";
+import { join, normalize, sep } from "node:path";
 
 const CONTENT_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -18,13 +18,17 @@ export function createStaticHandler(
   webRoot: string,
 ): (pathname: string) => Promise<Response | null> {
   const root = normalize(webRoot);
+  // Append a trailing separator so the containment check below cannot be
+  // fooled by a sibling directory that merely shares the root's prefix
+  // (e.g. "/app/web" must not be considered to contain "/app/web-secret").
+  const rootPrefix = root.endsWith(sep) ? root : root + sep;
 
   return async function serve(pathname: string): Promise<Response | null> {
     const relative = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
     const resolved = normalize(join(root, relative));
 
     // Reject anything that escapes the web root.
-    if (!resolved.startsWith(root)) return null;
+    if (resolved !== root && !resolved.startsWith(rootPrefix)) return null;
 
     const file = Bun.file(resolved);
     if (!(await file.exists())) return null;
