@@ -26,7 +26,11 @@ export function migrate(db: Database): void {
       currency    TEXT NOT NULL,
       category    TEXT,
       occurred_at TEXT NOT NULL,
-      note        TEXT NOT NULL DEFAULT ''
+      note        TEXT NOT NULL DEFAULT '',
+      -- Amount converted to the base currency at booking time. Nullable for
+      -- rows created before multi-currency; read falls back to the original.
+      base_amount_minor INTEGER,
+      base_currency     TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_transactions_month
@@ -70,4 +74,16 @@ export function migrate(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_recurring_postings_month
       ON recurring_postings (month);
   `);
+
+  // Upgrade older databases that predate the base-currency columns.
+  addColumnIfMissing(db, "transactions", "base_amount_minor", "INTEGER");
+  addColumnIfMissing(db, "transactions", "base_currency", "TEXT");
+}
+
+/** Adds a column to a table if it does not already exist (idempotent). */
+function addColumnIfMissing(db: Database, table: string, column: string, type: string): void {
+  const columns = db.query(`PRAGMA table_info(${table})`).all() as { name: string }[];
+  if (!columns.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  }
 }

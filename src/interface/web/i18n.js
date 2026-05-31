@@ -13,6 +13,7 @@ export const translations = {
     "label.language": "Language",
     "label.currency": "Currency",
     "label.trendRange": "Trend range",
+    "label.rate": "Rate to base currency",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -106,6 +107,7 @@ export const translations = {
     "label.language": "言語",
     "label.currency": "通貨",
     "label.trendRange": "推移の期間",
+    "label.rate": "基軸通貨へのレート",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",

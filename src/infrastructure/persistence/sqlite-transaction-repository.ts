@@ -13,9 +13,17 @@ interface TransactionRow {
   category: string | null;
   occurred_at: string;
   note: string;
+  base_amount_minor: number | null;
+  base_currency: string | null;
 }
 
 function toDomain(row: TransactionRow): Transaction {
+  // Rows created before multi-currency have null base columns: fall back to the
+  // original amount (identity), which is exactly the entity's own default.
+  const baseAmount =
+    row.base_amount_minor !== null && row.base_currency !== null
+      ? Money.ofMinor(row.base_amount_minor, row.base_currency)
+      : undefined;
   return new Transaction({
     id: row.id,
     type: row.type as TransactionType,
@@ -23,6 +31,7 @@ function toDomain(row: TransactionRow): Transaction {
     category: row.category === null ? undefined : toKakeiboCategory(row.category),
     occurredAt: new Date(row.occurred_at),
     note: row.note,
+    baseAmount,
   });
 }
 
@@ -36,16 +45,15 @@ function toParams(transaction: Transaction): Record<string, string | number | nu
     $category: (transaction.category as KakeiboCategory | undefined) ?? null,
     $occurredAt: transaction.occurredAt.toISOString(),
     $note: transaction.note,
+    $baseAmount: transaction.baseAmount.amount,
+    $baseCurrency: transaction.baseAmount.currency,
   };
 }
 
-const INSERT_OR_REPLACE_SQL = `INSERT OR REPLACE INTO transactions
-   (id, type, amount_minor, currency, category, occurred_at, note)
- VALUES ($id, $type, $amount, $currency, $category, $occurredAt, $note)`;
-
-const INSERT_SQL = `INSERT INTO transactions
-   (id, type, amount_minor, currency, category, occurred_at, note)
- VALUES ($id, $type, $amount, $currency, $category, $occurredAt, $note)`;
+const COLUMNS = "(id, type, amount_minor, currency, category, occurred_at, note, base_amount_minor, base_currency)";
+const VALUES = "($id, $type, $amount, $currency, $category, $occurredAt, $note, $baseAmount, $baseCurrency)";
+const INSERT_OR_REPLACE_SQL = `INSERT OR REPLACE INTO transactions ${COLUMNS} VALUES ${VALUES}`;
+const INSERT_SQL = `INSERT INTO transactions ${COLUMNS} VALUES ${VALUES}`;
 
 /** SQLite-backed {@link TransactionRepository} using `bun:sqlite`. */
 export class SqliteTransactionRepository implements TransactionRepository {

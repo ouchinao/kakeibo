@@ -22,7 +22,7 @@ describe("GetMonthlySummary", () => {
     planRepo = new InMemoryMonthlyPlanRepository();
     const ids = new SequentialIdGenerator();
     const clock = new FixedClock(new Date("2026-05-15T00:00:00Z"));
-    record = new RecordTransaction(txRepo, ids, clock);
+    record = new RecordTransaction(txRepo, ids, clock, "JPY");
     savePlan = new SaveMonthlyPlan(planRepo, ids);
     summary = new GetMonthlySummary(txRepo, planRepo, "JPY");
   });
@@ -107,17 +107,18 @@ describe("GetMonthlySummary", () => {
     expect(result.savingsGoalMet).toBe(false);
   });
 
-  test("honours a currency override for an unplanned month", async () => {
+  test("aggregates a foreign-currency transaction into the base currency via its rate", async () => {
     await record.execute({
       type: TransactionType.EXPENSE,
-      amountMinor: 1234,
+      amountMinor: 1234, // $12.34
       currency: "USD",
       category: KakeiboCategory.WANTS,
       occurredAt: new Date("2026-05-10T00:00:00Z"),
+      rate: 150, // USD -> JPY at booking
     });
 
-    const result = await summary.execute("2026-05", "USD");
-    expect(result.currency).toBe("USD");
-    expect(result.totalExpense.amount).toBe(1234);
+    const result = await summary.execute("2026-05");
+    expect(result.currency).toBe("JPY"); // base currency
+    expect(result.totalExpense.amount).toBe(1851); // 12.34 * 150 = 1851
   });
 });

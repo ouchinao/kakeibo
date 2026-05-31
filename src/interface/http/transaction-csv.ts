@@ -8,7 +8,16 @@ import { parseCsv, stringifyCsv } from "./csv.ts";
 /** Raised when an imported CSV is structurally invalid (mapped to HTTP 400). */
 export class CsvImportError extends ApplicationError {}
 
-const HEADER = ["date", "type", "category", "amount", "currency", "note"] as const;
+const HEADER = [
+  "date",
+  "type",
+  "category",
+  "amount",
+  "currency",
+  "base_amount",
+  "base_currency",
+  "note",
+] as const;
 
 /** Serialises transactions to CSV with a stable header row. */
 export function transactionsToCsv(transactions: readonly Transaction[]): string {
@@ -20,6 +29,10 @@ export function transactionsToCsv(transactions: readonly Transaction[]): string 
       tx.category ?? "",
       String(tx.amount.toMajor()),
       tx.amount.currency,
+      // The base-currency equivalent travels with the row so foreign entries
+      // round-trip without losing their booking-time conversion.
+      String(tx.baseAmount.toMajor()),
+      tx.baseAmount.currency,
       tx.note,
     ]);
   }
@@ -55,6 +68,8 @@ export function csvToImportRecords(
     category: index("category"),
     amount: index("amount"),
     currency: header.indexOf("currency"),
+    baseAmount: header.indexOf("base_amount"),
+    baseCurrency: header.indexOf("base_currency"),
     note: header.indexOf("note"),
   };
 
@@ -83,6 +98,37 @@ export function csvToImportRecords(
     const categoryRaw = get(cols.category);
     const dateRaw = get(cols.date);
 
+    // Foreign-currency rows must carry their base-currency equivalent (we never
+    // guess a rate), mirroring the single-entry API. Base-currency rows leave
+    // the base amount undefined so the entity defaults it to the amount.
+    let baseAmountMinor: number | undefined;
+    let baseCurrency: string | undefined;
+    if (currency !== defaultCurrency) {
+      const baseRaw = get(cols.baseAmount);
+      if (baseRaw === "") {
+        throw new CsvImportError(
+          `Row ${line}: a base amount (column "base_amount") is required for ${currency} entries`,
+        );
+      }
+      const baseMajor = Number(baseRaw);
+      if (!Number.isFinite(baseMajor) || baseMajor <= 0) {
+        throw new CsvImportError(`Row ${line}: invalid base amount "${baseRaw}"`);
+      }
+      const baseCurrencyRaw = get(cols.baseCurrency);
+      if (baseCurrencyRaw !== "" && baseCurrencyRaw !== defaultCurrency) {
+        throw new CsvImportError(
+          `Row ${line}: base currency "${baseCurrencyRaw}" does not match this ledger's base currency "${defaultCurrency}"`,
+        );
+      }
+      baseCurrency = defaultCurrency;
+      try {
+        baseAmountMinor = Money.ofMajor(baseMajor, baseCurrency).amount;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new CsvImportError(`Row ${line}: ${message}`);
+      }
+    }
+
     let occurredAt: Date | undefined;
     if (dateRaw !== "") {
       const parsed = new Date(dateRaw);
@@ -103,6 +149,8 @@ export function csvToImportRecords(
             : undefined,
         occurredAt,
         note: get(cols.note),
+        baseAmountMinor,
+        baseCurrency,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

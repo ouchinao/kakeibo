@@ -1,6 +1,8 @@
 import { type KakeiboCategory } from "../../domain/category.ts";
+import { ExchangeRate } from "../../domain/exchange-rate.ts";
 import { Money } from "../../domain/money.ts";
 import { Transaction, type TransactionType } from "../../domain/transaction.ts";
+import { ApplicationError } from "../errors.ts";
 import { type Clock } from "../ports/clock.ts";
 import { type IdGenerator } from "../ports/id-generator.ts";
 import { type TransactionRepository } from "../ports/repositories.ts";
@@ -15,26 +17,49 @@ export interface RecordTransactionCommand {
   /** When the money moved; defaults to "now" from the clock. */
   readonly occurredAt?: Date | undefined;
   readonly note?: string | undefined;
+  /**
+   * Exchange rate from the transaction's currency to the base currency, used to
+   * record the base-currency equivalent. Ignored when the transaction is
+   * already in the base currency; **required** otherwise (we never guess a
+   * rate, as a silent default of 1 would corrupt mixed-currency totals).
+   */
+  readonly rate?: number | undefined;
 }
 
 /**
- * Records a single income or expense.
+ * Records a single income or expense, capturing its base-currency equivalent at
+ * booking time so mixed-currency months aggregate correctly.
  *
- * The use case owns ID generation and the "default to now" policy, then
- * delegates invariant enforcement to the {@link Transaction} entity.
+ * The use case owns ID generation, the "default to now" policy, and the
+ * base-currency conversion; the {@link Transaction} entity enforces invariants.
  */
 export class RecordTransaction {
   constructor(
     private readonly transactions: TransactionRepository,
     private readonly idGenerator: IdGenerator,
     private readonly clock: Clock,
+    private readonly baseCurrency: string,
   ) {}
 
   async execute(command: RecordTransactionCommand): Promise<Transaction> {
+    const amount = Money.ofMinor(command.amountMinor, command.currency);
+    let baseAmount: Money;
+    if (amount.currency === this.baseCurrency) {
+      baseAmount = amount;
+    } else {
+      if (command.rate === undefined) {
+        throw new ApplicationError(
+          `A rate to ${this.baseCurrency} is required for ${amount.currency} transactions`,
+        );
+      }
+      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(amount);
+    }
+
     const transaction = new Transaction({
       id: this.idGenerator.next(),
       type: command.type,
-      amount: Money.ofMinor(command.amountMinor, command.currency),
+      amount,
+      baseAmount,
       category: command.category,
       occurredAt: command.occurredAt ?? this.clock.now(),
       note: command.note?.trim() ?? "",

@@ -67,7 +67,7 @@ export function createApp(config: AppConfig): App {
   const clock = new SystemClock();
 
   const fetch = createRouter({
-    recordTransaction: new RecordTransaction(transactions, ids, clock),
+    recordTransaction: new RecordTransaction(transactions, ids, clock, config.defaultCurrency),
     listTransactions: new ListTransactions(transactions),
     deleteTransaction: new DeleteTransaction(transactions),
     saveMonthlyPlan: new SaveMonthlyPlan(plans, ids),

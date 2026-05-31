@@ -107,8 +107,6 @@ function buildRoutes(deps: RouterDeps): Route[] {
     if (!month) throw new RouteError("Missing required 'month' parameter");
     return month;
   };
-  const optionalCurrency = (ctx: RouteContext): string | undefined =>
-    ctx.url.searchParams.get("currency") ?? undefined;
 
   return [
     {
@@ -129,6 +127,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           category: input.category as KakeiboCategory | undefined,
           occurredAt: input.occurredAt ? new Date(input.occurredAt) : undefined,
           note: input.note,
+          rate: input.rate,
         });
         return json(transactionToDto(tx), 201);
       },
@@ -176,13 +175,19 @@ function buildRoutes(deps: RouterDeps): Route[] {
     {
       method: "GET",
       pattern: "/api/currencies",
-      handler: async () => json(listCurrencies().map(currencyToDto)),
+      handler: async () =>
+        json(
+          listCurrencies().map((c) => ({
+            ...currencyToDto(c),
+            isBase: c.code === deps.defaultCurrency,
+          })),
+        ),
     },
     {
       method: "GET",
       pattern: "/api/summary",
       handler: async (_req, ctx) => {
-        const summary = await deps.getMonthlySummary.execute(requireMonth(ctx), optionalCurrency(ctx));
+        const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
         return json(summaryToDto(summary));
       },
     },
@@ -192,7 +197,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const monthsParam = ctx.url.searchParams.get("months");
         const months = monthsParam === null ? 6 : Number(monthsParam);
-        const points = await deps.getTrend.execute(requireMonth(ctx), months, optionalCurrency(ctx));
+        const points = await deps.getTrend.execute(requireMonth(ctx), months);
         return json(trendToDto(points));
       },
     },
@@ -231,7 +236,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
       method: "GET",
       pattern: "/api/forecast",
       handler: async (_req, ctx) => {
-        const forecast = await deps.getForecast.execute(requireMonth(ctx), optionalCurrency(ctx));
+        const forecast = await deps.getForecast.execute(requireMonth(ctx));
         return json(forecastToDto(forecast));
       },
     },
