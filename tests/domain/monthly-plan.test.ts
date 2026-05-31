@@ -66,3 +66,36 @@ describe("MonthlyPlan", () => {
     expect(plan.budgetFor(KakeiboCategory.NEEDS).amount).toBe(150000);
   });
 });
+
+describe("MonthlyPlan base-currency view", () => {
+  test("base amounts default to the plan's own currency", () => {
+    const plan = buildPlan();
+    expect(plan.baseCurrency).toBe("JPY");
+    expect(plan.basePlannedIncome.equals(plan.plannedIncome)).toBe(true);
+    expect(plan.baseSavingsGoal.equals(plan.savingsGoal)).toBe(true);
+    expect(plan.baseAvailableToSpend().amount).toBe(240000);
+    expect(plan.baseBudgetFor(KakeiboCategory.NEEDS).amount).toBe(150000);
+  });
+
+  test("keeps distinct base-currency amounts when provided", () => {
+    const usd = (amount: number) => Money.ofMinor(amount, "USD");
+    const plan = buildPlan({
+      plannedIncome: usd(200000), // $2,000.00
+      savingsGoal: usd(50000), // $500.00
+      categoryBudgets: new Map([[KakeiboCategory.NEEDS, usd(100000)]]),
+      basePlannedIncome: jpy(300000), // ¥300,000 at a booking rate of 150
+      baseSavingsGoal: jpy(75000),
+      baseCategoryBudgets: new Map([[KakeiboCategory.NEEDS, jpy(150000)]]),
+    });
+    expect(plan.currency).toBe("USD");
+    expect(plan.baseCurrency).toBe("JPY");
+    expect(plan.baseAvailableToSpend().amount).toBe(225000);
+    expect(plan.baseBudgetFor(KakeiboCategory.NEEDS).amount).toBe(150000);
+  });
+
+  test("rejects mixed currencies across the base fields", () => {
+    expect(() => buildPlan({ baseSavingsGoal: Money.ofMinor(1, "USD") })).toThrow(
+      CurrencyMismatchError,
+    );
+  });
+});

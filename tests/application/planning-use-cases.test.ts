@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { KakeiboCategory } from "../../src/domain/category.ts";
+import { ApplicationError } from "../../src/application/errors.ts";
 import { GetMonthlyPlan } from "../../src/application/use-cases/get-monthly-plan.ts";
 import { SaveMonthlyPlan } from "../../src/application/use-cases/save-monthly-plan.ts";
 import { GetReflection } from "../../src/application/use-cases/get-reflection.ts";
@@ -18,7 +19,7 @@ describe("monthly plan use cases", () => {
   beforeEach(() => {
     repo = new InMemoryMonthlyPlanRepository();
     const ids = new SequentialIdGenerator();
-    save = new SaveMonthlyPlan(repo, ids);
+    save = new SaveMonthlyPlan(repo, ids, "JPY");
     get = new GetMonthlyPlan(repo);
   });
 
@@ -56,6 +57,34 @@ describe("monthly plan use cases", () => {
 
   test("returns null for a month without a plan", async () => {
     expect(await get.execute("2030-01")).toBeNull();
+  });
+
+  test("requires an explicit rate for a foreign-currency plan", async () => {
+    await expect(
+      save.execute({
+        month: "2026-05",
+        currency: "USD", // base is JPY, no rate
+        plannedIncomeMinor: 200000,
+        savingsGoalMinor: 50000,
+      }),
+    ).rejects.toThrow(ApplicationError);
+  });
+
+  test("converts a foreign-currency plan into the base currency", async () => {
+    const plan = await save.execute({
+      month: "2026-05",
+      currency: "USD",
+      plannedIncomeMinor: 200000, // $2,000.00
+      savingsGoalMinor: 50000, // $500.00
+      categoryBudgetsMinor: { [KakeiboCategory.NEEDS]: 100000 }, // $1,000.00
+      rate: 150, // USD -> JPY
+    });
+    expect(plan.currency).toBe("USD");
+    expect(plan.baseCurrency).toBe("JPY");
+    expect(plan.basePlannedIncome.amount).toBe(300000); // 2000 * 150
+    expect(plan.baseSavingsGoal.amount).toBe(75000); // 500 * 150
+    expect(plan.baseBudgetFor(KakeiboCategory.NEEDS).amount).toBe(150000); // 1000 * 150
+    expect(plan.baseAvailableToSpend().amount).toBe(225000);
   });
 });
 
