@@ -2,6 +2,7 @@ import { type KakeiboCategory } from "../../domain/category.ts";
 import { ExchangeRate } from "../../domain/exchange-rate.ts";
 import { Money } from "../../domain/money.ts";
 import { Transaction, type TransactionType } from "../../domain/transaction.ts";
+import { ApplicationError } from "../errors.ts";
 import { type Clock } from "../ports/clock.ts";
 import { type IdGenerator } from "../ports/id-generator.ts";
 import { type TransactionRepository } from "../ports/repositories.ts";
@@ -19,7 +20,8 @@ export interface RecordTransactionCommand {
   /**
    * Exchange rate from the transaction's currency to the base currency, used to
    * record the base-currency equivalent. Ignored when the transaction is
-   * already in the base currency; defaults to 1 (manual fallback) otherwise.
+   * already in the base currency; **required** otherwise (we never guess a
+   * rate, as a silent default of 1 would corrupt mixed-currency totals).
    */
   readonly rate?: number | undefined;
 }
@@ -41,10 +43,17 @@ export class RecordTransaction {
 
   async execute(command: RecordTransactionCommand): Promise<Transaction> {
     const amount = Money.ofMinor(command.amountMinor, command.currency);
-    const baseAmount =
-      amount.currency === this.baseCurrency
-        ? amount
-        : ExchangeRate.of(amount.currency, this.baseCurrency, command.rate ?? 1).convert(amount);
+    let baseAmount: Money;
+    if (amount.currency === this.baseCurrency) {
+      baseAmount = amount;
+    } else {
+      if (command.rate === undefined) {
+        throw new ApplicationError(
+          `A rate to ${this.baseCurrency} is required for ${amount.currency} transactions`,
+        );
+      }
+      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(amount);
+    }
 
     const transaction = new Transaction({
       id: this.idGenerator.next(),

@@ -78,6 +78,7 @@ describe("CSV import/export API", () => {
       category: "WANTS",
       note: "Coffee, large",
       occurredAt: "2026-05-05T00:00:00Z",
+      rate: 150, // foreign currency requires a rate to the base currency
     });
     const csv = await (
       await app.fetch(new Request("http://test.local/api/transactions/export?month=2026-05"))

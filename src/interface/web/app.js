@@ -314,8 +314,12 @@ function applyCurrency() {
   for (const input of document.querySelectorAll(".amount-input")) {
     input.step = step;
   }
-  // The base-currency conversion rate is only relevant for foreign entries.
-  els.txRateField.style.display = currentCurrency === baseCurrency ? "none" : "";
+  // The base-currency conversion rate is only relevant for foreign entries,
+  // where it is mandatory (we never guess a rate). Toggle `required` alongside
+  // visibility so a hidden field can never block submission of a base entry.
+  const isForeign = currentCurrency !== baseCurrency;
+  els.txRateField.style.display = isForeign ? "" : "none";
+  els.txRate.required = isForeign;
 }
 
 function setCurrency(code) {

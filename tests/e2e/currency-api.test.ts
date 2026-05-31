@@ -51,6 +51,7 @@ describe("Currency API", () => {
       currency: "USD",
       category: "WANTS",
       occurredAt: "2026-05-10T00:00:00Z",
+      rate: 150, // foreign currency requires a rate to the base currency
     });
     expect(res.status).toBe(201);
     expect((await readJson(res)).amount.formatted).toBe("$12.34");
