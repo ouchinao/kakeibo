@@ -29,9 +29,19 @@ describe("Currency API", () => {
     expect(res.status).toBe(200);
     const list = await readJson(res);
     const byCode = Object.fromEntries(list.map((c: any) => [c.code, c]));
-    expect(Object.keys(byCode).sort()).toEqual(["EUR", "JPY", "USD"]);
+    expect(Object.keys(byCode).sort()).toEqual([
+      "AUD",
+      "EUR",
+      "JPY",
+      "MYR",
+      "SGD",
+      "THB",
+      "TWD",
+      "USD",
+    ]);
     expect(byCode.JPY.minorUnits).toBe(0);
     expect(byCode.USD.minorUnits).toBe(2);
+    expect(byCode.SGD.minorUnits).toBe(2);
   });
 
   test("accepts decimals for a USD transaction", async () => {

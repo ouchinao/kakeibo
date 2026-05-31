@@ -22,6 +22,11 @@ const CURRENCIES: Readonly<Record<string, CurrencyDefinition>> = {
   JPY: { code: "JPY", minorUnits: 0, symbol: "¥" },
   USD: { code: "USD", minorUnits: 2, symbol: "$" },
   EUR: { code: "EUR", minorUnits: 2, symbol: "€" },
+  AUD: { code: "AUD", minorUnits: 2, symbol: "A$" },
+  THB: { code: "THB", minorUnits: 2, symbol: "฿" },
+  MYR: { code: "MYR", minorUnits: 2, symbol: "RM" },
+  TWD: { code: "TWD", minorUnits: 2, symbol: "NT$" },
+  SGD: { code: "SGD", minorUnits: 2, symbol: "S$" },
 };
 
 /** Returns true when the given code is a supported currency. */
