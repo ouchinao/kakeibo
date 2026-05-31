@@ -2,16 +2,14 @@
 // Vanilla ES modules, no build step and no external dependencies, so the UI
 // works fully offline alongside the local API.
 
-const CATEGORY_LABELS = {
-  NEEDS: "Needs",
-  WANTS: "Wants",
-  CULTURE: "Culture",
-  UNEXPECTED: "Unexpected",
-};
+import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
+const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
+const LANGUAGE_STORAGE_KEY = "kakeibo-lang";
 
 const els = {
+  lang: document.getElementById("lang"),
   month: document.getElementById("month"),
   stats: document.getElementById("stats"),
   categories: document.getElementById("categories"),
@@ -32,6 +30,15 @@ const els = {
   importInput: document.getElementById("import-input"),
   toast: document.getElementById("toast"),
 };
+
+let currentLang = resolveLanguage(
+  localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? navigator.language ?? "en",
+);
+
+/** Translate a key in the active language. */
+const t = (key, vars) => translate(currentLang, key, vars);
+/** Localised label for a kakeibo category. */
+const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
 
@@ -65,13 +72,13 @@ function renderSummary(summary) {
   const savingsMood = summary.savingsGoalMet ? "good" : "bad";
   const remainingMood = summary.remainingToSpend.minor < 0 ? "bad" : "good";
   els.stats.innerHTML = [
-    stat("Available to spend", summary.availableToSpend.formatted),
-    stat("Remaining to spend", summary.remainingToSpend.formatted, remainingMood),
-    stat("Income", summary.totalIncome.formatted),
-    stat("Expense", summary.totalExpense.formatted),
-    stat("Actual savings", summary.actualSavings.formatted, savingsMood),
+    stat(t("stat.availableToSpend"), summary.availableToSpend.formatted),
+    stat(t("stat.remainingToSpend"), summary.remainingToSpend.formatted, remainingMood),
+    stat(t("stat.income"), summary.totalIncome.formatted),
+    stat(t("stat.expense"), summary.totalExpense.formatted),
+    stat(t("stat.actualSavings"), summary.actualSavings.formatted, savingsMood),
     stat(
-      "Savings goal",
+      t("stat.savingsGoal"),
       `${summary.savingsGoal.formatted} ${summary.savingsGoalMet ? "✓" : ""}`,
       savingsMood,
     ),
@@ -84,12 +91,12 @@ function renderSummary(summary) {
       const overClass = c.overBudget ? " over" : "";
       const budgetText =
         budget > 0
-          ? `${c.spent.formatted} / ${c.budget.formatted} (${pct}%)`
-          : `${c.spent.formatted} spent · no budget set`;
+          ? t("msg.budgetUsage", { spent: c.spent.formatted, budget: c.budget.formatted, pct })
+          : t("msg.noBudget", { spent: c.spent.formatted });
       return `
         <div class="cat-row">
           <div class="cat-head">
-            <strong>${CATEGORY_LABELS[c.category]}</strong>
+            <strong>${categoryLabel(c.category)}</strong>
             <span class="${c.overBudget ? "value bad" : "muted"}">${budgetText}</span>
           </div>
           <div class="bar${overClass}"><span style="width:${pct}%"></span></div>
@@ -100,22 +107,23 @@ function renderSummary(summary) {
 
 function renderTransactions(list) {
   if (list.length === 0) {
-    els.txList.innerHTML = `<tr><td colspan="6" class="muted">No transactions yet.</td></tr>`;
+    els.txList.innerHTML = `<tr><td colspan="6" class="muted">${t("msg.noTransactions")}</td></tr>`;
     return;
   }
   els.txList.innerHTML = list
     .map((tx) => {
       const date = tx.occurredAt.slice(0, 10);
-      const category = tx.category ? CATEGORY_LABELS[tx.category] : "—";
+      const category = tx.category ? categoryLabel(tx.category) : "—";
       const sign = tx.type === "INCOME" ? "+" : "−";
+      const typeLabel = tx.type === "INCOME" ? t("type.income") : t("type.expense");
       return `
         <tr>
           <td>${date}</td>
-          <td><span class="tag">${tx.type === "INCOME" ? "Income" : "Expense"}</span></td>
+          <td><span class="tag">${typeLabel}</span></td>
           <td>${category}</td>
           <td>${escapeHtml(tx.note)}</td>
           <td style="text-align:right">${sign}${tx.amount.formatted}</td>
-          <td style="text-align:right"><button class="danger" data-id="${tx.id}">Delete</button></td>
+          <td style="text-align:right"><button class="danger" data-id="${tx.id}">${t("button.delete")}</button></td>
         </tr>`;
     })
     .join("");
@@ -124,7 +132,7 @@ function renderTransactions(list) {
 function renderPlan(plan) {
   els.planForm.querySelector("#plan-income").value = plan ? plan.plannedIncome.major : "";
   els.planForm.querySelector("#plan-savings").value = plan ? plan.savingsGoal.major : "";
-  for (const key of Object.keys(CATEGORY_LABELS)) {
+  for (const key of CATEGORY_KEYS) {
     const input = els.planForm.querySelector(`#plan-${key}`);
     input.value = plan?.categoryBudgets?.[key] ? plan.categoryBudgets[key].major : "";
   }
@@ -134,19 +142,19 @@ function renderForecast(forecast) {
   const netMood = forecast.onTrack ? "good" : "bad";
   els.forecast.innerHTML = `
     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
-      ${stat("Projected net", `${forecast.projectedNet.formatted} ${forecast.onTrack ? "✓" : ""}`, netMood)}
-      ${stat("Projected expense", forecast.projectedExpense.formatted)}
-      ${stat("Recurring remaining", forecast.recurringRemaining.formatted)}
-      ${stat("Expected income", forecast.expectedIncome.formatted)}
+      ${stat(t("forecast.projectedNet"), `${forecast.projectedNet.formatted} ${forecast.onTrack ? "✓" : ""}`, netMood)}
+      ${stat(t("forecast.projectedExpense"), forecast.projectedExpense.formatted)}
+      ${stat(t("forecast.recurringRemaining"), forecast.recurringRemaining.formatted)}
+      ${stat(t("forecast.expectedIncome"), forecast.expectedIncome.formatted)}
     </div>
     <p class="muted" style="margin: 12px 0 0; font-size: 0.85rem">
-      Projection = expected income − (actual expense + recurring not yet posted).
+      ${t("forecast.note")}
     </p>`;
 }
 
 function renderRecurring(list) {
   if (list.length === 0) {
-    els.recurringList.innerHTML = `<p class="muted">No recurring expenses yet.</p>`;
+    els.recurringList.innerHTML = `<p class="muted">${t("recurring.none")}</p>`;
     return;
   }
   els.recurringList.innerHTML = list
@@ -155,11 +163,11 @@ function renderRecurring(list) {
         <div class="cat-row" style="display:flex; justify-content:space-between; align-items:center; gap:8px">
           <div>
             <strong>${escapeHtml(r.name)}</strong>
-            <span class="muted"> · ${CATEGORY_LABELS[r.category]} · day ${r.dayOfMonth}</span>
+            <span class="muted"> · ${categoryLabel(r.category)} · ${t("recurring.dayLabel", { day: r.dayOfMonth })}</span>
           </div>
           <div style="display:flex; align-items:center; gap:10px">
             <span>${r.amount.formatted}</span>
-            <button class="danger" data-recurring-id="${r.id}">Delete</button>
+            <button class="danger" data-recurring-id="${r.id}">${t("button.delete")}</button>
           </div>
         </div>`,
     )
@@ -168,7 +176,7 @@ function renderRecurring(list) {
 
 function renderTrend(points) {
   if (points.length === 0) {
-    els.trend.innerHTML = `<p class="muted">No data.</p>`;
+    els.trend.innerHTML = `<p class="muted">${t("trend.none")}</p>`;
     return;
   }
 
@@ -200,9 +208,9 @@ function renderTrend(points) {
       const center = i * groupW + groupW / 2;
       const month = p.month.slice(2); // YY-MM
       return `
-        ${bar(center - barW - 1, p.totalIncome.minor, "var(--accent)", `Income ${p.totalIncome.formatted}`)}
-        ${bar(center, p.totalExpense.minor, "var(--warn)", `Expense ${p.totalExpense.formatted}`)}
-        ${bar(center + barW + 1, p.actualSavings.minor, "#60a5fa", `Savings ${p.actualSavings.formatted}`)}
+        ${bar(center - barW - 1, p.totalIncome.minor, "var(--accent)", `${t("type.income")} ${p.totalIncome.formatted}`)}
+        ${bar(center, p.totalExpense.minor, "var(--warn)", `${t("type.expense")} ${p.totalExpense.formatted}`)}
+        ${bar(center + barW + 1, p.actualSavings.minor, "#60a5fa", `${t("trend.savings")} ${p.actualSavings.formatted}`)}
         <text x="${center}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${month}</text>`;
     })
     .join("");
@@ -214,29 +222,33 @@ function renderTrend(points) {
     </svg>`;
 }
 
-function renderReflection(reflection, questions) {
+function renderReflection(reflection) {
   els.reflectionForm.innerHTML = REFLECTION_KEYS.map((key) => {
     const value = reflection?.answers?.[key] ?? "";
     return `
       <div>
-        <label>${questions[key]}</label>
+        <label>${t(`question.${key}`)}</label>
         <textarea data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
       </div>`;
   }).join("");
 }
-
-const DEFAULT_QUESTIONS = {
-  howMuchAvailable: "How much money did you have available?",
-  howMuchSaved: "How much money did you manage to save?",
-  howMuchSpent: "How much money did you actually spend?",
-  howToImprove: "How can you improve next month?",
-};
 
 function escapeHtml(value) {
   return String(value).replace(
     /[&<>"']/g,
     (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch],
   );
+}
+
+/** Applies translations to all static [data-i18n] elements in the document. */
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLang;
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    el.textContent = t(el.dataset.i18n);
+  }
+  for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
+    el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+  }
 }
 
 async function refresh() {
@@ -255,7 +267,7 @@ async function refresh() {
     renderSummary(summary);
     renderTransactions(transactions);
     renderPlan(plan);
-    renderReflection(reflection, reflection?.questions ?? DEFAULT_QUESTIONS);
+    renderReflection(reflection);
     renderForecast(forecast);
     renderRecurring(recurring);
     renderTrend(trend);
@@ -268,8 +280,17 @@ function toggleCategoryField() {
   els.txCategoryField.style.display = els.txType.value === "EXPENSE" ? "" : "none";
 }
 
+function setLanguage(lang) {
+  currentLang = SUPPORTED_LANGUAGES.includes(lang) ? lang : "en";
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
+  els.lang.value = currentLang;
+  applyStaticTranslations();
+  refresh();
+}
+
 // --- Event wiring -----------------------------------------------------------
 
+els.lang.addEventListener("change", () => setLanguage(els.lang.value));
 els.month.addEventListener("change", refresh);
 els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
@@ -288,7 +309,7 @@ els.txForm.addEventListener("submit", async (event) => {
     await api("/api/transactions", { method: "POST", body: JSON.stringify(payload) });
     els.txForm.reset();
     toggleCategoryField();
-    toast("Transaction added");
+    toast(t("toast.txAdded"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -300,7 +321,7 @@ els.txList.addEventListener("click", async (event) => {
   if (!button) return;
   try {
     await api(`/api/transactions/${button.dataset.id}`, { method: "DELETE" });
-    toast("Transaction deleted");
+    toast(t("toast.txDeleted"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -310,7 +331,7 @@ els.txList.addEventListener("click", async (event) => {
 els.planForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const categoryBudgets = {};
-  for (const key of Object.keys(CATEGORY_LABELS)) {
+  for (const key of CATEGORY_KEYS) {
     const raw = els.planForm.querySelector(`#plan-${key}`).value;
     if (raw !== "") categoryBudgets[key] = Number(raw);
   }
@@ -321,7 +342,7 @@ els.planForm.addEventListener("submit", async (event) => {
   };
   try {
     await api(`/api/plans/${currentMonth()}`, { method: "PUT", body: JSON.stringify(body) });
-    toast("Plan saved");
+    toast(t("toast.planSaved"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -339,7 +360,7 @@ els.reflectionForm.addEventListener("submit", async (event) => {
       method: "PUT",
       body: JSON.stringify({ answers }),
     });
-    toast("Reflection saved");
+    toast(t("toast.reflectionSaved"));
   } catch (err) {
     toast(err.message, true);
   }
@@ -357,7 +378,7 @@ els.recurringForm.addEventListener("submit", async (event) => {
     await api("/api/recurring", { method: "POST", body: JSON.stringify(payload) });
     els.recurringForm.reset();
     document.getElementById("rec-day").value = "1";
-    toast("Recurring expense added");
+    toast(t("toast.recurringAdded"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -369,7 +390,7 @@ els.recurringList.addEventListener("click", async (event) => {
   if (!button) return;
   try {
     await api(`/api/recurring/${button.dataset.recurringId}`, { method: "DELETE" });
-    toast("Recurring expense deleted");
+    toast(t("toast.recurringDeleted"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -379,7 +400,7 @@ els.recurringList.addEventListener("click", async (event) => {
 els.postRecurringBtn.addEventListener("click", async () => {
   try {
     const result = await api(`/api/recurring/post?month=${currentMonth()}`, { method: "POST" });
-    toast(`Posted ${result.posted} recurring expense(s)`);
+    toast(t("toast.recurringPosted", { n: result.posted }));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -405,7 +426,7 @@ els.importInput.addEventListener("change", async (event) => {
     });
     const body = await res.json().catch(() => null);
     if (!res.ok) throw new Error(body?.error?.message ?? `Import failed (${res.status})`);
-    toast(`Imported ${body.imported} transaction(s)`);
+    toast(t("toast.imported", { n: body.imported }));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -417,5 +438,7 @@ els.importInput.addEventListener("change", async (event) => {
 // --- Init -------------------------------------------------------------------
 
 els.month.value = new Date().toISOString().slice(0, 7);
+els.lang.value = currentLang;
+applyStaticTranslations();
 toggleCategoryField();
 refresh();
