@@ -120,6 +120,60 @@
         <div id="categories"><p class="muted">…</p></div>
       </section>
 
+      <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
+          <h2 style="margin: 0" data-i18n="heading.trend">Trend</h2>
+          <div class="field" style="max-width: 150px; flex: 0 0 auto">
+            <select id="trend-range">
+              <option value="3" data-i18n="trend.range3">Last 3 months</option>
+              <option value="6" selected data-i18n="trend.range6">Last 6 months</option>
+              <option value="12" data-i18n="trend.range12">Last 12 months</option>
+            </select>
+          </div>
+        </div>
+        <div id="trend" style="margin-top: 12px"><p class="muted">…</p></div>
+        <div style="display: flex; gap: 16px; margin-top: 10px; font-size: 0.82rem" class="muted">
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px"></span> <span data-i18n="type.income">Income</span></span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--warn);border-radius:2px"></span> <span data-i18n="type.expense">Expense</span></span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#60a5fa;border-radius:2px"></span> <span data-i18n="trend.savings">Savings</span></span>
+        </div>
+      </section>
+
+      <section class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="card">
+          <h2 data-i18n="heading.forecast">Forecast</h2>
+          <div id="forecast"><p class="muted">…</p></div>
+        </div>
+
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
+            <h2 style="margin: 0" data-i18n="heading.recurring">Recurring expenses</h2>
+            <button type="button" id="post-recurring-btn" class="ghost" data-i18n="button.postToMonth">Post to this month</button>
+          </div>
+          <form id="recurring-form" style="margin-top: 12px">
+            <div class="row">
+              <div class="field" style="flex: 1 1 100%"><label data-i18n="label.recurringName">Name</label><input id="rec-name" data-i18n-placeholder="placeholder.recurringName" placeholder="Rent, Netflix…" required /></div>
+            </div>
+            <div class="row" style="margin-top: 10px">
+              <div class="field"><label data-i18n="label.amount">Amount</label><input id="rec-amount" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label data-i18n="label.day">Day</label><input id="rec-day" type="number" min="1" max="28" value="1" required /></div>
+            </div>
+            <div class="row" style="margin-top: 10px">
+              <div class="field"><label data-i18n="label.category">Category</label>
+                <select id="rec-category">
+                  <option value="NEEDS" data-i18n="category.NEEDS">Needs</option>
+                  <option value="WANTS" data-i18n="category.WANTS">Wants</option>
+                  <option value="CULTURE" data-i18n="category.CULTURE">Culture</option>
+                  <option value="UNEXPECTED" data-i18n="category.UNEXPECTED">Unexpected</option>
+                </select>
+              </div>
+              <div class="field" style="display: flex; align-items: flex-end"><button type="submit" style="width:100%" data-i18n="button.addRecurring">Add recurring</button></div>
+            </div>
+          </form>
+          <div id="recurring-list" style="margin-top: 12px"></div>
+        </div>
+      </section>
+
       <section class="grid" style="grid-template-columns: 1fr 1fr">
         <div class="card">
           <h2 data-i18n="heading.addTransaction">Add transaction</h2>
@@ -169,8 +223,15 @@
       </section>
 
       <section class="card">
-        <h2 data-i18n="heading.transactions">Transactions</h2>
-        <table>
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
+          <h2 style="margin: 0" data-i18n="heading.transactions">Transactions</h2>
+          <div style="display: flex; gap: 8px">
+            <button type="button" id="export-btn" class="ghost" data-i18n="button.exportCsv">⬇ Export CSV</button>
+            <button type="button" id="import-btn" class="ghost" data-i18n="button.importCsv">⬆ Import CSV</button>
+            <input type="file" id="import-input" accept=".csv,text/csv" hidden />
+          </div>
+        </div>
+        <table style="margin-top: 12px">
           <thead><tr>
             <th data-i18n="table.date">Date</th>
             <th data-i18n="table.type">Type</th>

@@ -1,22 +1,34 @@
 import { type KakeiboCategory } from "../../domain/category.ts";
 import { Money } from "../../domain/money.ts";
 import { ApplicationError } from "../../application/errors.ts";
+import { type CreateRecurringExpense } from "../../application/use-cases/create-recurring-expense.ts";
+import { type DeleteRecurringExpense } from "../../application/use-cases/delete-recurring-expense.ts";
 import { type DeleteTransaction } from "../../application/use-cases/delete-transaction.ts";
+import { type GetForecast } from "../../application/use-cases/get-forecast.ts";
 import { type GetMonthlyPlan } from "../../application/use-cases/get-monthly-plan.ts";
 import { type GetMonthlySummary } from "../../application/use-cases/get-monthly-summary.ts";
 import { type GetReflection } from "../../application/use-cases/get-reflection.ts";
+import { type GetTrend } from "../../application/use-cases/get-trend.ts";
+import { type ImportTransactions } from "../../application/use-cases/import-transactions.ts";
+import { type ListRecurringExpenses } from "../../application/use-cases/list-recurring-expenses.ts";
 import { type ListTransactions } from "../../application/use-cases/list-transactions.ts";
+import { type PostRecurringExpenses } from "../../application/use-cases/post-recurring-expenses.ts";
 import { type RecordTransaction } from "../../application/use-cases/record-transaction.ts";
 import { type SaveMonthlyPlan } from "../../application/use-cases/save-monthly-plan.ts";
 import { type SaveReflection } from "../../application/use-cases/save-reflection.ts";
+import { csvToImportRecords, transactionsToCsv } from "./transaction-csv.ts";
 import { json, toErrorResponse } from "./json.ts";
 import {
+  forecastToDto,
   planToDto,
+  recurringExpenseToDto,
   reflectionToDto,
   summaryToDto,
   transactionToDto,
+  trendToDto,
 } from "./presenters.ts";
 import {
+  createRecurringExpenseSchema,
   recordTransactionSchema,
   saveMonthlyPlanSchema,
   saveReflectionSchema,
@@ -32,6 +44,13 @@ export interface RouterDeps {
   getMonthlySummary: GetMonthlySummary;
   saveReflection: SaveReflection;
   getReflection: GetReflection;
+  createRecurringExpense: CreateRecurringExpense;
+  listRecurringExpenses: ListRecurringExpenses;
+  deleteRecurringExpense: DeleteRecurringExpense;
+  postRecurringExpenses: PostRecurringExpenses;
+  getForecast: GetForecast;
+  getTrend: GetTrend;
+  importTransactions: ImportTransactions;
   defaultCurrency: string;
   /** Optional static-asset handler for the web UI (returns null to fall through). */
   serveStatic?: (pathname: string) => Promise<Response | null>;
@@ -119,6 +138,30 @@ function buildRoutes(deps: RouterDeps): Route[] {
       },
     },
     {
+      method: "GET",
+      pattern: "/api/transactions/export",
+      handler: async (_req, ctx) => {
+        const month = requireMonth(ctx);
+        const txs = await deps.listTransactions.execute(month);
+        return new Response(transactionsToCsv(txs), {
+          headers: {
+            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": `attachment; filename="kakeibo-${month}.csv"`,
+          },
+        });
+      },
+    },
+    {
+      method: "POST",
+      pattern: "/api/transactions/import",
+      handler: async (req) => {
+        const csv = await req.text();
+        const records = csvToImportRecords(csv, deps.defaultCurrency);
+        const result = await deps.importTransactions.execute(records);
+        return json({ imported: result.imported }, 201);
+      },
+    },
+    {
       method: "DELETE",
       pattern: "/api/transactions/:id",
       handler: async (_req, ctx) => {
@@ -132,6 +175,16 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
         return json(summaryToDto(summary));
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/trend",
+      handler: async (_req, ctx) => {
+        const monthsParam = ctx.url.searchParams.get("months");
+        const months = monthsParam === null ? 6 : Number(monthsParam);
+        const points = await deps.getTrend.execute(requireMonth(ctx), months);
+        return json(trendToDto(points));
       },
     },
     {
@@ -163,6 +216,55 @@ function buildRoutes(deps: RouterDeps): Route[] {
           categoryBudgetsMinor,
         });
         return json(planToDto(plan));
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/forecast",
+      handler: async (_req, ctx) => {
+        const forecast = await deps.getForecast.execute(requireMonth(ctx));
+        return json(forecastToDto(forecast));
+      },
+    },
+    {
+      method: "POST",
+      pattern: "/api/recurring",
+      handler: async (req) => {
+        const input = createRecurringExpenseSchema.parse(await req.json());
+        const currency = input.currency ?? deps.defaultCurrency;
+        const recurring = await deps.createRecurringExpense.execute({
+          name: input.name,
+          amountMinor: Money.ofMajor(input.amount, currency).amount,
+          currency,
+          category: input.category as KakeiboCategory,
+          dayOfMonth: input.dayOfMonth,
+          active: input.active,
+        });
+        return json(recurringExpenseToDto(recurring), 201);
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/recurring",
+      handler: async () => {
+        const list = await deps.listRecurringExpenses.execute();
+        return json(list.map(recurringExpenseToDto));
+      },
+    },
+    {
+      method: "POST",
+      pattern: "/api/recurring/post",
+      handler: async (_req, ctx) => {
+        const result = await deps.postRecurringExpenses.execute(requireMonth(ctx));
+        return json({ posted: result.posted });
+      },
+    },
+    {
+      method: "DELETE",
+      pattern: "/api/recurring/:id",
+      handler: async (_req, ctx) => {
+        await deps.deleteRecurringExpense.execute(ctx.params.id as string);
+        return new Response(null, { status: 204 });
       },
     },
     {
