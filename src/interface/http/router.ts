@@ -254,6 +254,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           category: input.category as KakeiboCategory,
           dayOfMonth: input.dayOfMonth,
           active: input.active,
+          rate: input.rate,
         });
         return json(recurringExpenseToDto(recurring), 201);
       },
