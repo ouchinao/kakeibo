@@ -116,10 +116,11 @@ Amounts in requests are in human-friendly **major units** (e.g. `1200` for
 | `GET`    | `/api/reflections/:month`         | Get a month's reflection          |
 | `PUT`    | `/api/reflections/:month`         | Create/update a month's reflection |
 
-Automatic exchange rates come from [Frankfurter](https://frankfurter.dev), a
-free, key-less, ECB-backed API — no credentials are stored or sent. When a rate
-is unavailable (an unsupported currency, or the network is blocked), the rate is
-entered manually instead.
+Automatic exchange rates come from [Frankfurter](https://www.frankfurter.app), a
+free, key-less, ECB-backed API — no credentials are stored or sent. The host
+`api.frankfurter.app` must be reachable; under a restrictive network policy add
+it to the allowlist. When a rate is unavailable (an unsupported currency, or the
+network is blocked), the rate is entered manually instead.
 
 ### Examples
 
