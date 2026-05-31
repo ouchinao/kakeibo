@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  convertMinor,
   convertToBaseMinor,
   formatMoney,
   ratePlausible,
@@ -24,6 +25,28 @@ describe("convertToBaseMinor", () => {
     expect(convertToBaseMinor(-5, 150, 0)).toBeNull();
     expect(convertToBaseMinor(10, -1, 0)).toBeNull();
     expect(convertToBaseMinor(Infinity, 150, 0)).toBeNull();
+  });
+});
+
+describe("convertMinor (base -> display currency, for read-only totals)", () => {
+  test("converts a base minor amount into a display currency's minor units", () => {
+    // ¥1,851 (JPY, 0 decimals) at base->display rate 1/150 -> $12.34 (2 decimals).
+    expect(convertMinor(1851, 0, 1 / 150, 2)).toBe(1234);
+  });
+
+  test("converts from a two-decimal base into a zero-decimal display", () => {
+    // $12.34 (2 decimals) at rate 150 -> ¥1,851 (0 decimals).
+    expect(convertMinor(1234, 2, 150, 0)).toBe(1851);
+  });
+
+  test("preserves sign for negative totals (e.g. a negative net)", () => {
+    expect(convertMinor(-1851, 0, 1 / 150, 2)).toBe(-1234);
+  });
+
+  test("returns null for a non-finite amount or non-positive rate", () => {
+    expect(convertMinor(NaN, 0, 150, 2)).toBeNull();
+    expect(convertMinor(1000, 0, 0, 2)).toBeNull();
+    expect(convertMinor(1000, 0, -1, 2)).toBeNull();
   });
 });
 
