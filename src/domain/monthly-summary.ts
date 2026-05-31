@@ -53,8 +53,8 @@ export interface MonthlySummaryInput {
  * Computes the {@link MonthlySummary} from a month's transactions and optional
  * plan. Pure function — no I/O, fully deterministic, easy to unit test.
  *
- * All monetary inputs must share `currency`; mismatches surface as a
- * `CurrencyMismatchError` from the underlying {@link Money} arithmetic.
+ * This is a single-currency view: transactions whose currency differs from
+ * `currency` are excluded (full multi-currency support is future work).
  */
 export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary {
   const { month, currency, transactions, plan } = input;
@@ -65,6 +65,12 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
   const spentByCategory = new Map<KakeiboCategory, Money>();
 
   for (const tx of transactions) {
+    // This is a single-currency view: a transaction recorded in another
+    // currency is not representable here, so it is skipped rather than
+    // crashing the summary with a CurrencyMismatchError (consistent with
+    // buildMonthlyForecast).
+    if (tx.amount.currency !== currency) continue;
+
     if (tx.isIncome()) {
       totalIncome = totalIncome.add(tx.amount);
     } else {
