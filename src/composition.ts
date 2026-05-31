@@ -2,17 +2,26 @@ import { type Database } from "bun:sqlite";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getCurrency } from "./domain/currency.ts";
+import { CreateRecurringExpense } from "./application/use-cases/create-recurring-expense.ts";
+import { DeleteRecurringExpense } from "./application/use-cases/delete-recurring-expense.ts";
 import { DeleteTransaction } from "./application/use-cases/delete-transaction.ts";
+import { GetForecast } from "./application/use-cases/get-forecast.ts";
 import { GetMonthlyPlan } from "./application/use-cases/get-monthly-plan.ts";
 import { GetMonthlySummary } from "./application/use-cases/get-monthly-summary.ts";
 import { GetReflection } from "./application/use-cases/get-reflection.ts";
 import { GetTrend } from "./application/use-cases/get-trend.ts";
 import { ImportTransactions } from "./application/use-cases/import-transactions.ts";
+import { ListRecurringExpenses } from "./application/use-cases/list-recurring-expenses.ts";
 import { ListTransactions } from "./application/use-cases/list-transactions.ts";
+import { PostRecurringExpenses } from "./application/use-cases/post-recurring-expenses.ts";
 import { RecordTransaction } from "./application/use-cases/record-transaction.ts";
 import { SaveMonthlyPlan } from "./application/use-cases/save-monthly-plan.ts";
 import { SaveReflection } from "./application/use-cases/save-reflection.ts";
 import { openDatabase } from "./infrastructure/persistence/database.ts";
+import {
+  SqliteRecurringExpenseRepository,
+  SqliteRecurringPostingLog,
+} from "./infrastructure/persistence/sqlite-recurring-repositories.ts";
 import { SqliteMonthlyPlanRepository } from "./infrastructure/persistence/sqlite-monthly-plan-repository.ts";
 import { SqliteReflectionRepository } from "./infrastructure/persistence/sqlite-reflection-repository.ts";
 import { SqliteTransactionRepository } from "./infrastructure/persistence/sqlite-transaction-repository.ts";
@@ -52,6 +61,8 @@ export function createApp(config: AppConfig): App {
   const transactions = new SqliteTransactionRepository(db);
   const plans = new SqliteMonthlyPlanRepository(db);
   const reflections = new SqliteReflectionRepository(db);
+  const recurring = new SqliteRecurringExpenseRepository(db);
+  const postingLog = new SqliteRecurringPostingLog(db);
   const ids = new UuidIdGenerator();
   const clock = new SystemClock();
 
@@ -64,6 +75,11 @@ export function createApp(config: AppConfig): App {
     getMonthlySummary: new GetMonthlySummary(transactions, plans, config.defaultCurrency),
     saveReflection: new SaveReflection(reflections, ids),
     getReflection: new GetReflection(reflections),
+    createRecurringExpense: new CreateRecurringExpense(recurring, ids),
+    listRecurringExpenses: new ListRecurringExpenses(recurring),
+    deleteRecurringExpense: new DeleteRecurringExpense(recurring),
+    postRecurringExpenses: new PostRecurringExpenses(recurring, postingLog, transactions, ids),
+    getForecast: new GetForecast(transactions, plans, recurring, postingLog, config.defaultCurrency),
     getTrend: new GetTrend(transactions, plans, config.defaultCurrency),
     importTransactions: new ImportTransactions(transactions, ids, clock),
     defaultCurrency: config.defaultCurrency,

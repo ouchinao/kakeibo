@@ -46,5 +46,23 @@ export function migrate(db: Database): void {
       id           TEXT NOT NULL,
       answers_json TEXT NOT NULL DEFAULT '{}'
     );
+
+    CREATE TABLE IF NOT EXISTS recurring_expenses (
+      id           TEXT PRIMARY KEY,
+      name         TEXT NOT NULL,
+      amount_minor INTEGER NOT NULL,
+      currency     TEXT NOT NULL,
+      category     TEXT NOT NULL,
+      day_of_month INTEGER NOT NULL,
+      active       INTEGER NOT NULL DEFAULT 1
+    );
+
+    -- Records that a recurring expense was auto-posted in a given month,
+    -- keeping posting idempotent and forecasts free of double-counting.
+    CREATE TABLE IF NOT EXISTS recurring_postings (
+      recurring_id TEXT NOT NULL,
+      month        TEXT NOT NULL,
+      PRIMARY KEY (recurring_id, month)
+    );
   `);
 }
