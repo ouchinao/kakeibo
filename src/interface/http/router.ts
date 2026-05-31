@@ -8,12 +8,15 @@ import { type GetForecast } from "../../application/use-cases/get-forecast.ts";
 import { type GetMonthlyPlan } from "../../application/use-cases/get-monthly-plan.ts";
 import { type GetMonthlySummary } from "../../application/use-cases/get-monthly-summary.ts";
 import { type GetReflection } from "../../application/use-cases/get-reflection.ts";
+import { type GetTrend } from "../../application/use-cases/get-trend.ts";
+import { type ImportTransactions } from "../../application/use-cases/import-transactions.ts";
 import { type ListRecurringExpenses } from "../../application/use-cases/list-recurring-expenses.ts";
 import { type ListTransactions } from "../../application/use-cases/list-transactions.ts";
 import { type PostRecurringExpenses } from "../../application/use-cases/post-recurring-expenses.ts";
 import { type RecordTransaction } from "../../application/use-cases/record-transaction.ts";
 import { type SaveMonthlyPlan } from "../../application/use-cases/save-monthly-plan.ts";
 import { type SaveReflection } from "../../application/use-cases/save-reflection.ts";
+import { csvToImportRecords, transactionsToCsv } from "./transaction-csv.ts";
 import { json, toErrorResponse } from "./json.ts";
 import {
   forecastToDto,
@@ -22,6 +25,7 @@ import {
   reflectionToDto,
   summaryToDto,
   transactionToDto,
+  trendToDto,
 } from "./presenters.ts";
 import {
   createRecurringExpenseSchema,
@@ -45,6 +49,8 @@ export interface RouterDeps {
   deleteRecurringExpense: DeleteRecurringExpense;
   postRecurringExpenses: PostRecurringExpenses;
   getForecast: GetForecast;
+  getTrend: GetTrend;
+  importTransactions: ImportTransactions;
   defaultCurrency: string;
   /** Optional static-asset handler for the web UI (returns null to fall through). */
   serveStatic?: (pathname: string) => Promise<Response | null>;
@@ -132,6 +138,30 @@ function buildRoutes(deps: RouterDeps): Route[] {
       },
     },
     {
+      method: "GET",
+      pattern: "/api/transactions/export",
+      handler: async (_req, ctx) => {
+        const month = requireMonth(ctx);
+        const txs = await deps.listTransactions.execute(month);
+        return new Response(transactionsToCsv(txs), {
+          headers: {
+            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": `attachment; filename="kakeibo-${month}.csv"`,
+          },
+        });
+      },
+    },
+    {
+      method: "POST",
+      pattern: "/api/transactions/import",
+      handler: async (req) => {
+        const csv = await req.text();
+        const records = csvToImportRecords(csv, deps.defaultCurrency);
+        const result = await deps.importTransactions.execute(records);
+        return json({ imported: result.imported }, 201);
+      },
+    },
+    {
       method: "DELETE",
       pattern: "/api/transactions/:id",
       handler: async (_req, ctx) => {
@@ -145,6 +175,16 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
         return json(summaryToDto(summary));
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/trend",
+      handler: async (_req, ctx) => {
+        const monthsParam = ctx.url.searchParams.get("months");
+        const months = monthsParam === null ? 6 : Number(monthsParam);
+        const points = await deps.getTrend.execute(requireMonth(ctx), months);
+        return json(trendToDto(points));
       },
     },
     {

@@ -9,6 +9,8 @@ import { GetForecast } from "./application/use-cases/get-forecast.ts";
 import { GetMonthlyPlan } from "./application/use-cases/get-monthly-plan.ts";
 import { GetMonthlySummary } from "./application/use-cases/get-monthly-summary.ts";
 import { GetReflection } from "./application/use-cases/get-reflection.ts";
+import { GetTrend } from "./application/use-cases/get-trend.ts";
+import { ImportTransactions } from "./application/use-cases/import-transactions.ts";
 import { ListRecurringExpenses } from "./application/use-cases/list-recurring-expenses.ts";
 import { ListTransactions } from "./application/use-cases/list-transactions.ts";
 import { PostRecurringExpenses } from "./application/use-cases/post-recurring-expenses.ts";
@@ -78,6 +80,8 @@ export function createApp(config: AppConfig): App {
     deleteRecurringExpense: new DeleteRecurringExpense(recurring),
     postRecurringExpenses: new PostRecurringExpenses(recurring, postingLog, transactions, ids),
     getForecast: new GetForecast(transactions, plans, recurring, postingLog, config.defaultCurrency),
+    getTrend: new GetTrend(transactions, plans, config.defaultCurrency),
+    importTransactions: new ImportTransactions(transactions, ids, clock),
     defaultCurrency: config.defaultCurrency,
     serveStatic: createStaticHandler(WEB_ROOT),
   });

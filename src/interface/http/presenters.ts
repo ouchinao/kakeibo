@@ -5,6 +5,7 @@ import { type MonthlySummary } from "../../domain/monthly-summary.ts";
 import { type RecurringExpense } from "../../domain/recurring-expense.ts";
 import { REFLECTION_QUESTIONS, type Reflection } from "../../domain/reflection.ts";
 import { type Transaction } from "../../domain/transaction.ts";
+import { type TrendPoint } from "../../application/use-cases/get-trend.ts";
 
 /**
  * Presenters map domain objects to plain, JSON-serialisable DTOs.
@@ -104,6 +105,17 @@ export function forecastToDto(forecast: MonthlyForecast) {
     savingsGoal: moneyToDto(forecast.savingsGoal),
     onTrack: forecast.onTrack,
   };
+}
+
+export function trendToDto(points: readonly TrendPoint[]) {
+  return points.map((point) => ({
+    month: point.month.toString(),
+    totalIncome: moneyToDto(point.totalIncome),
+    totalExpense: moneyToDto(point.totalExpense),
+    actualSavings: moneyToDto(point.actualSavings),
+    savingsGoal: moneyToDto(point.savingsGoal),
+    savingsGoalMet: point.savingsGoalMet,
+  }));
 }
 
 export function reflectionToDto(reflection: Reflection) {

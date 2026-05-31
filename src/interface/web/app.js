@@ -25,6 +25,11 @@ const els = {
   recurringForm: document.getElementById("recurring-form"),
   recurringList: document.getElementById("recurring-list"),
   postRecurringBtn: document.getElementById("post-recurring-btn"),
+  trend: document.getElementById("trend"),
+  trendRange: document.getElementById("trend-range"),
+  exportBtn: document.getElementById("export-btn"),
+  importBtn: document.getElementById("import-btn"),
+  importInput: document.getElementById("import-input"),
   toast: document.getElementById("toast"),
 };
 
@@ -161,6 +166,54 @@ function renderRecurring(list) {
     .join("");
 }
 
+function renderTrend(points) {
+  if (points.length === 0) {
+    els.trend.innerHTML = `<p class="muted">No data.</p>`;
+    return;
+  }
+
+  const W = Math.max(points.length * 64, 200);
+  const H = 180;
+  const padTop = 10;
+  const padBottom = 24;
+  const chartH = H - padTop - padBottom;
+
+  const values = points.flatMap((p) => [p.totalIncome.minor, p.totalExpense.minor, p.actualSavings.minor]);
+  const max = Math.max(...values, 0);
+  const min = Math.min(...values, 0);
+  const range = max - min || 1;
+  const y = (v) => padTop + ((max - v) / range) * chartH;
+  const zeroY = y(0);
+
+  const groupW = W / points.length;
+  const barW = Math.min(14, groupW / 4);
+
+  const bar = (cx, value, color, label) => {
+    const top = y(Math.max(value, 0));
+    const bottom = y(Math.min(value, 0));
+    const h = Math.max(bottom - top, 1);
+    return `<rect x="${cx - barW / 2}" y="${top}" width="${barW}" height="${h}" rx="2" fill="${color}"><title>${label}</title></rect>`;
+  };
+
+  const bars = points
+    .map((p, i) => {
+      const center = i * groupW + groupW / 2;
+      const month = p.month.slice(2); // YY-MM
+      return `
+        ${bar(center - barW - 1, p.totalIncome.minor, "var(--accent)", `Income ${p.totalIncome.formatted}`)}
+        ${bar(center, p.totalExpense.minor, "var(--warn)", `Expense ${p.totalExpense.formatted}`)}
+        ${bar(center + barW + 1, p.actualSavings.minor, "#60a5fa", `Savings ${p.actualSavings.formatted}`)}
+        <text x="${center}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${month}</text>`;
+    })
+    .join("");
+
+  els.trend.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Monthly trend chart">
+      <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" />
+      ${bars}
+    </svg>`;
+}
+
 function renderReflection(reflection, questions) {
   els.reflectionForm.innerHTML = REFLECTION_KEYS.map((key) => {
     const value = reflection?.answers?.[key] ?? "";
@@ -189,20 +242,23 @@ function escapeHtml(value) {
 async function refresh() {
   const month = currentMonth();
   try {
-    const [summary, transactions, plan, reflection, forecast, recurring] = await Promise.all([
-      api(`/api/summary?month=${month}`),
-      api(`/api/transactions?month=${month}`),
-      api(`/api/plans/${month}`).catch(() => null),
-      api(`/api/reflections/${month}`).catch(() => null),
-      api(`/api/forecast?month=${month}`),
-      api(`/api/recurring`),
-    ]);
+    const [summary, transactions, plan, reflection, forecast, recurring, trend] =
+      await Promise.all([
+        api(`/api/summary?month=${month}`),
+        api(`/api/transactions?month=${month}`),
+        api(`/api/plans/${month}`).catch(() => null),
+        api(`/api/reflections/${month}`).catch(() => null),
+        api(`/api/forecast?month=${month}`),
+        api(`/api/recurring`),
+        api(`/api/trend?month=${month}&months=${els.trendRange.value}`),
+      ]);
     renderSummary(summary);
     renderTransactions(transactions);
     renderPlan(plan);
     renderReflection(reflection, reflection?.questions ?? DEFAULT_QUESTIONS);
     renderForecast(forecast);
     renderRecurring(recurring);
+    renderTrend(trend);
   } catch (err) {
     toast(err.message, true);
   }
@@ -215,6 +271,7 @@ function toggleCategoryField() {
 // --- Event wiring -----------------------------------------------------------
 
 els.month.addEventListener("change", refresh);
+els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
 
 els.txForm.addEventListener("submit", async (event) => {
@@ -326,6 +383,34 @@ els.postRecurringBtn.addEventListener("click", async () => {
     refresh();
   } catch (err) {
     toast(err.message, true);
+  }
+});
+
+els.exportBtn.addEventListener("click", () => {
+  // Let the browser download the CSV via the export endpoint.
+  window.location.href = `/api/transactions/export?month=${currentMonth()}`;
+});
+
+els.importBtn.addEventListener("click", () => els.importInput.click());
+
+els.importInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const csv = await file.text();
+    const res = await fetch("/api/transactions/import", {
+      method: "POST",
+      headers: { "content-type": "text/csv" },
+      body: csv,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error?.message ?? `Import failed (${res.status})`);
+    toast(`Imported ${body.imported} transaction(s)`);
+    refresh();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    els.importInput.value = "";
   }
 });
 
