@@ -5,7 +5,7 @@ import { type MonthlySummary } from "../../domain/monthly-summary.ts";
 import { type RecurringExpense } from "../../domain/recurring-expense.ts";
 import { REFLECTION_QUESTIONS, type Reflection } from "../../domain/reflection.ts";
 import { type Transaction } from "../../domain/transaction.ts";
-import { type TrendPoint } from "../../application/use-cases/get-trend.ts";
+import { type TrendPoint } from "../../domain/trend-point.ts";
 
 /**
  * Presenters map domain objects to plain, JSON-serialisable DTOs.
