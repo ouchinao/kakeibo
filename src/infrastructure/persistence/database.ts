@@ -64,5 +64,10 @@ export function migrate(db: Database): void {
       month        TEXT NOT NULL,
       PRIMARY KEY (recurring_id, month)
     );
+
+    -- The composite PK leads with recurring_id, so lookups by month alone
+    -- (GetForecast -> postedIds) cannot use it efficiently. Index month.
+    CREATE INDEX IF NOT EXISTS idx_recurring_postings_month
+      ON recurring_postings (month);
   `);
 }
