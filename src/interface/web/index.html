@@ -124,7 +124,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
           <h2 style="margin: 0" data-i18n="heading.trend">Trend</h2>
           <div class="field" style="max-width: 150px; flex: 0 0 auto">
-            <select id="trend-range">
+            <select id="trend-range" data-i18n-aria-label="label.trendRange" aria-label="Trend range">
               <option value="3" data-i18n="trend.range3">Last 3 months</option>
               <option value="6" selected data-i18n="trend.range6">Last 6 months</option>
               <option value="12" data-i18n="trend.range12">Last 12 months</option>
@@ -152,14 +152,14 @@
           </div>
           <form id="recurring-form" style="margin-top: 12px">
             <div class="row">
-              <div class="field" style="flex: 1 1 100%"><label data-i18n="label.recurringName">Name</label><input id="rec-name" data-i18n-placeholder="placeholder.recurringName" placeholder="Rent, Netflix…" required /></div>
+              <div class="field" style="flex: 1 1 100%"><label for="rec-name" data-i18n="label.recurringName">Name</label><input id="rec-name" data-i18n-placeholder="placeholder.recurringName" placeholder="Rent, Netflix…" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label data-i18n="label.amount">Amount</label><input id="rec-amount" type="number" step="0.01" min="0" required /></div>
-              <div class="field"><label data-i18n="label.day">Day</label><input id="rec-day" type="number" min="1" max="28" value="1" required /></div>
+              <div class="field"><label for="rec-amount" data-i18n="label.amount">Amount</label><input id="rec-amount" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="rec-day" data-i18n="label.day">Day</label><input id="rec-day" type="number" min="1" max="28" value="1" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label data-i18n="label.category">Category</label>
+              <div class="field"><label for="rec-category" data-i18n="label.category">Category</label>
                 <select id="rec-category">
                   <option value="NEEDS" data-i18n="category.NEEDS">Needs</option>
                   <option value="WANTS" data-i18n="category.WANTS">Wants</option>
@@ -179,16 +179,16 @@
           <h2 data-i18n="heading.addTransaction">Add transaction</h2>
           <form id="tx-form">
             <div class="row">
-              <div class="field"><label data-i18n="label.type">Type</label>
+              <div class="field"><label for="tx-type" data-i18n="label.type">Type</label>
                 <select name="type" id="tx-type">
                   <option value="EXPENSE" data-i18n="type.expense">Expense</option>
                   <option value="INCOME" data-i18n="type.income">Income</option>
                 </select>
               </div>
-              <div class="field"><label data-i18n="label.amount">Amount</label><input name="amount" id="tx-amount" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="tx-amount" data-i18n="label.amount">Amount</label><input name="amount" id="tx-amount" type="number" step="0.01" min="0" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field" id="tx-category-field"><label data-i18n="label.category">Category</label>
+              <div class="field" id="tx-category-field"><label for="tx-category" data-i18n="label.category">Category</label>
                 <select name="category" id="tx-category">
                   <option value="NEEDS" data-i18n="category.NEEDS">Needs</option>
                   <option value="WANTS" data-i18n="category.WANTS">Wants</option>
@@ -196,7 +196,7 @@
                   <option value="UNEXPECTED" data-i18n="category.UNEXPECTED">Unexpected</option>
                 </select>
               </div>
-              <div class="field"><label data-i18n="label.note">Note</label><input name="note" id="tx-note" data-i18n-placeholder="placeholder.note" placeholder="optional" /></div>
+              <div class="field"><label for="tx-note" data-i18n="label.note">Note</label><input name="note" id="tx-note" data-i18n-placeholder="placeholder.note" placeholder="optional" /></div>
             </div>
             <div style="margin-top: 12px"><button type="submit" data-i18n="button.add">Add</button></div>
           </form>
@@ -206,16 +206,16 @@
           <h2 data-i18n="heading.monthlyPlan">Monthly plan</h2>
           <form id="plan-form">
             <div class="row">
-              <div class="field"><label data-i18n="label.plannedIncome">Planned income</label><input id="plan-income" type="number" step="0.01" min="0" required /></div>
-              <div class="field"><label data-i18n="label.savingsGoal">Savings goal</label><input id="plan-savings" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="plan-income" data-i18n="label.plannedIncome">Planned income</label><input id="plan-income" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="plan-savings" data-i18n="label.savingsGoal">Savings goal</label><input id="plan-savings" type="number" step="0.01" min="0" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label data-i18n="label.needsBudget">Needs budget</label><input id="plan-NEEDS" type="number" step="0.01" min="0" /></div>
-              <div class="field"><label data-i18n="label.wantsBudget">Wants budget</label><input id="plan-WANTS" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-NEEDS" data-i18n="label.needsBudget">Needs budget</label><input id="plan-NEEDS" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-WANTS" data-i18n="label.wantsBudget">Wants budget</label><input id="plan-WANTS" type="number" step="0.01" min="0" /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label data-i18n="label.cultureBudget">Culture budget</label><input id="plan-CULTURE" type="number" step="0.01" min="0" /></div>
-              <div class="field"><label data-i18n="label.unexpectedBudget">Unexpected budget</label><input id="plan-UNEXPECTED" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-CULTURE" data-i18n="label.cultureBudget">Culture budget</label><input id="plan-CULTURE" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-UNEXPECTED" data-i18n="label.unexpectedBudget">Unexpected budget</label><input id="plan-UNEXPECTED" type="number" step="0.01" min="0" /></div>
             </div>
             <div style="margin-top: 12px"><button type="submit" class="ghost" data-i18n="button.savePlan">Save plan</button></div>
           </form>
@@ -228,7 +228,7 @@
           <div style="display: flex; gap: 8px">
             <button type="button" id="export-btn" class="ghost" data-i18n="button.exportCsv">⬇ Export CSV</button>
             <button type="button" id="import-btn" class="ghost" data-i18n="button.importCsv">⬆ Import CSV</button>
-            <input type="file" id="import-input" accept=".csv,text/csv" hidden />
+            <input type="file" id="import-input" accept=".csv,text/csv" data-i18n-aria-label="button.importCsv" aria-label="Import CSV" hidden />
           </div>
         </div>
         <table style="margin-top: 12px">

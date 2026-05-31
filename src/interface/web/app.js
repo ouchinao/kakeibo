@@ -227,8 +227,8 @@ function renderReflection(reflection) {
     const value = reflection?.answers?.[key] ?? "";
     return `
       <div>
-        <label>${t(`question.${key}`)}</label>
-        <textarea data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
+        <label for="reflection-${key}">${t(`question.${key}`)}</label>
+        <textarea id="reflection-${key}" data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
       </div>`;
   }).join("");
 }
@@ -248,6 +248,9 @@ function applyStaticTranslations() {
   }
   for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
     el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+  }
+  for (const el of document.querySelectorAll("[data-i18n-aria-label]")) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
   }
 }
 

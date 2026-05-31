@@ -11,6 +11,7 @@ export const translations = {
     "app.subtitle": "— mindful monthly budgeting",
     "label.month": "Month",
     "label.language": "Language",
+    "label.trendRange": "Trend range",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -101,6 +102,7 @@ export const translations = {
     "app.subtitle": "— 心がけて続ける月次家計簿",
     "label.month": "月",
     "label.language": "言語",
+    "label.trendRange": "推移の期間",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",
