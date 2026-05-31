@@ -100,6 +100,20 @@ export const translations = {
     "toast.recurringDeleted": "Recurring expense deleted",
     "toast.recurringPosted": "Posted {n} recurring expense(s)",
     "toast.imported": "Imported {n} transaction(s)",
+
+    // Localised API/validation error messages, keyed by the error `code` the
+    // server emits (see src/interface/http/json.ts). `error.GENERIC` is the
+    // last-resort message when no code is mapped and no server message exists.
+    "error.GENERIC": "Something went wrong. Please try again.",
+    "error.VALIDATION_ERROR": "The information you entered is not valid.",
+    "error.NOT_FOUND": "The requested item could not be found.",
+    "error.INTERNAL_ERROR": "An unexpected server error occurred. Please try again.",
+    "error.BusinessRuleError": "That action is not allowed by the budgeting rules.",
+    "error.InvalidValueError": "One of the values you entered is invalid.",
+    "error.CurrencyMismatchError": "The currencies of these amounts do not match.",
+    "error.CsvImportError": "The CSV file could not be imported. Please check its format.",
+    "error.RouteError": "The request was missing required information.",
+    "error.ApplicationError": "The request could not be completed.",
   },
   ja: {
     "app.subtitle": "— 心がけて続ける月次家計簿",
@@ -194,6 +208,17 @@ export const translations = {
     "toast.recurringDeleted": "定期支出を削除しました",
     "toast.recurringPosted": "{n}件の定期支出を計上しました",
     "toast.imported": "{n}件の取引を読み込みました",
+
+    "error.GENERIC": "問題が発生しました。もう一度お試しください。",
+    "error.VALIDATION_ERROR": "入力された内容が正しくありません。",
+    "error.NOT_FOUND": "対象の項目が見つかりませんでした。",
+    "error.INTERNAL_ERROR": "サーバーで予期しないエラーが発生しました。もう一度お試しください。",
+    "error.BusinessRuleError": "その操作は家計簿のルールにより許可されていません。",
+    "error.InvalidValueError": "入力された値のいずれかが正しくありません。",
+    "error.CurrencyMismatchError": "これらの金額の通貨が一致しません。",
+    "error.CsvImportError": "CSVファイルを読み込めませんでした。形式をご確認ください。",
+    "error.RouteError": "リクエストに必要な情報が不足しています。",
+    "error.ApplicationError": "リクエストを完了できませんでした。",
   },
 };
 
@@ -208,6 +233,26 @@ export function translate(lang, key, vars = {}) {
   return template.replace(/\{(\w+)\}/g, (match, name) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
   );
+}
+
+/**
+ * Localises an API error for display, given the error `code` the server emits
+ * and the raw server-provided `message`.
+ *
+ * Resolution order:
+ *   1. A translation for `error.<code>` in the active language.
+ *   2. The server-provided English `message` (so unmapped codes still inform).
+ *   3. A generic localised message, so a toast is never blank.
+ */
+export function errorMessage(lang, code, fallback) {
+  const table = translations[lang] ?? translations[DEFAULT_LANGUAGE];
+  if (code) {
+    const key = `error.${code}`;
+    const mapped = table[key] ?? translations[DEFAULT_LANGUAGE][key];
+    if (mapped) return mapped;
+  }
+  if (typeof fallback === "string" && fallback.length > 0) return fallback;
+  return table["error.GENERIC"] ?? translations[DEFAULT_LANGUAGE]["error.GENERIC"];
 }
 
 /** Normalises an arbitrary locale string to a supported language code. */

@@ -12,4 +12,10 @@ export function translate(
   vars?: Record<string, string | number>,
 ): string;
 
+export function errorMessage(
+  lang: string,
+  code: string | null | undefined,
+  fallback: string | null | undefined,
+): string;
+
 export function resolveLanguage(input: string): string;
