@@ -272,16 +272,17 @@ function applyStaticTranslations() {
 async function refresh() {
   const month = currentMonth();
   try {
-    const cur = `&currency=${encodeURIComponent(currentCurrency)}`;
+    // Summary/forecast/trend aggregate in the base currency server-side, so no
+    // display-currency parameter is sent.
     const [summary, transactions, plan, reflection, forecast, recurring, trend] =
       await Promise.all([
-        api(`/api/summary?month=${month}${cur}`),
+        api(`/api/summary?month=${month}`),
         api(`/api/transactions?month=${month}`),
         api(`/api/plans/${month}`).catch(() => null),
         api(`/api/reflections/${month}`).catch(() => null),
-        api(`/api/forecast?month=${month}${cur}`),
+        api(`/api/forecast?month=${month}`),
         api(`/api/recurring`),
-        api(`/api/trend?month=${month}&months=${els.trendRange.value}${cur}`),
+        api(`/api/trend?month=${month}&months=${els.trendRange.value}`),
       ]);
     renderSummary(summary);
     renderTransactions(transactions);
