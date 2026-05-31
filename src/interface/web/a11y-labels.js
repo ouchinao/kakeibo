@@ -15,3 +15,20 @@ export function deleteTransactionAriaLabel(tx, t) {
 export function deleteRecurringAriaLabel(recurring, t) {
   return `${t("button.delete")} ${recurring.name} ${recurring.amount.formatted}`;
 }
+
+/**
+ * Text alternative for the trend chart: a per-month spoken summary so screen
+ * readers can access the data the SVG conveys visually.
+ */
+export function trendChartAriaLabel(points, t) {
+  if (points.length === 0) return t("trend.none");
+  const months = points
+    .map(
+      (p) =>
+        `${p.month}: ${t("type.income")} ${p.totalIncome.formatted}, ` +
+        `${t("type.expense")} ${p.totalExpense.formatted}, ` +
+        `${t("trend.savings")} ${p.actualSavings.formatted}`,
+    )
+    .join("; ");
+  return `${t("heading.trend")} — ${months}`;
+}

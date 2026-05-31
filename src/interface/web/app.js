@@ -2,7 +2,11 @@
 // Vanilla ES modules, no build step and no external dependencies, so the UI
 // works fully offline alongside the local API.
 
-import { deleteRecurringAriaLabel, deleteTransactionAriaLabel } from "./a11y-labels.js";
+import {
+  deleteRecurringAriaLabel,
+  deleteTransactionAriaLabel,
+  trendChartAriaLabel,
+} from "./a11y-labels.js";
 import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
@@ -217,7 +221,7 @@ function renderTrend(points) {
     .join("");
 
   els.trend.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Monthly trend chart">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escapeHtml(trendChartAriaLabel(points, t))}">
       <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" />
       ${bars}
     </svg>`;

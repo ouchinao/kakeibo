@@ -41,6 +41,7 @@ export const translations = {
     "table.category": "Category",
     "table.note": "Note",
     "table.amount": "Amount",
+    "table.actions": "Actions",
 
     "type.income": "Income",
     "type.expense": "Expense",
@@ -132,6 +133,7 @@ export const translations = {
     "table.category": "カテゴリ",
     "table.note": "メモ",
     "table.amount": "金額",
+    "table.actions": "操作",
 
     "type.income": "収入",
     "type.expense": "支出",
