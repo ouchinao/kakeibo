@@ -16,6 +16,9 @@ export const translations = {
     "label.rate": "Rate to base currency",
     "hint.rateAuto": "Auto rate ({source}, {date}) — editable",
     "hint.rateManual": "No automatic rate; enter it manually",
+    "preview.label": "Converted base amount",
+    "preview.convertedBase": "≈ {amount}",
+    "preview.rateWarning": "Double-check this rate — the converted amount looks unusual.",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -124,6 +127,9 @@ export const translations = {
     "label.rate": "基軸通貨へのレート",
     "hint.rateAuto": "自動レート（{source}、{date}）— 編集できます",
     "hint.rateManual": "自動レートなし。手動で入力してください",
+    "preview.label": "換算後の基軸通貨額",
+    "preview.convertedBase": "≈ {amount}",
+    "preview.rateWarning": "レートを確認してください。換算額が異常に見えます。",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",
