@@ -21,6 +21,9 @@ const els = {
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
   reflectionForm: document.getElementById("reflection-form"),
+  exportBtn: document.getElementById("export-btn"),
+  importBtn: document.getElementById("import-btn"),
+  importInput: document.getElementById("import-input"),
   toast: document.getElementById("toast"),
 };
 
@@ -241,6 +244,34 @@ els.reflectionForm.addEventListener("submit", async (event) => {
     toast("Reflection saved");
   } catch (err) {
     toast(err.message, true);
+  }
+});
+
+els.exportBtn.addEventListener("click", () => {
+  // Let the browser download the CSV via the export endpoint.
+  window.location.href = `/api/transactions/export?month=${currentMonth()}`;
+});
+
+els.importBtn.addEventListener("click", () => els.importInput.click());
+
+els.importInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const csv = await file.text();
+    const res = await fetch("/api/transactions/import", {
+      method: "POST",
+      headers: { "content-type": "text/csv" },
+      body: csv,
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error?.message ?? `Import failed (${res.status})`);
+    toast(`Imported ${body.imported} transaction(s)`);
+    refresh();
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    els.importInput.value = "";
   }
 });
 
