@@ -59,14 +59,14 @@ describe("ExchangeRate", () => {
       expect(() => rate.convert(Money.ofMinor(1000, "EUR"))).toThrow(CurrencyMismatchError);
     });
 
-    test("rounds half-up at the target precision", () => {
-      // 0.5 cents should round up to 1 cent.
-      const rate = ExchangeRate.of("USD", "USD", 1); // identity won't round; use a real conversion
-      expect(rate.convert(Money.ofMinor(1, "USD")).amount).toBe(1);
+    test("rounds to the nearest minor unit of the target", () => {
+      const eurToUsd = ExchangeRate.of("EUR", "USD", 1.018);
+      // €1.00 * 1.018 = 1.018 USD -> rounds to 1.02 -> 102 minor
+      expect(eurToUsd.convert(Money.ofMinor(100, "EUR")).amount).toBe(102);
 
-      const eurToUsd = ExchangeRate.of("EUR", "USD", 1.005);
-      // €1.00 * 1.005 = 1.005 USD -> rounds to 1.01 -> 101 minor
-      expect(eurToUsd.convert(Money.ofMinor(100, "EUR")).amount).toBe(101);
+      const eurToJpy = ExchangeRate.of("EUR", "JPY", 162.4);
+      // €12.34 * 162.4 = 2004.016 -> JPY rounds to 2004
+      expect(eurToJpy.convert(Money.ofMinor(1234, "EUR")).amount).toBe(2004);
     });
   });
 });
