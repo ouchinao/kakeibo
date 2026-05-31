@@ -26,6 +26,7 @@ const els = {
   txCategoryField: document.getElementById("tx-category-field"),
   txRateField: document.getElementById("tx-rate-field"),
   txRate: document.getElementById("tx-rate"),
+  txRateSource: document.getElementById("tx-rate-source"),
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
   reflectionForm: document.getElementById("reflection-form"),
@@ -320,6 +321,39 @@ function applyCurrency() {
   const isForeign = currentCurrency !== baseCurrency;
   els.txRateField.style.display = isForeign ? "" : "none";
   els.txRate.required = isForeign;
+  if (isForeign) {
+    void autofillRate();
+  } else {
+    els.txRate.value = "";
+    els.txRateSource.textContent = "";
+  }
+}
+
+/**
+ * Pre-fills the FX rate from the auto-rate API (Frankfurter) for the active
+ * foreign currency, leaving it editable. Falls back to manual entry when no
+ * automatic rate is available (e.g. an unsupported currency or offline).
+ */
+async function autofillRate() {
+  const requested = currentCurrency;
+  if (requested === baseCurrency) return;
+  try {
+    const result = await api(
+      `/api/rate?from=${encodeURIComponent(requested)}&to=${encodeURIComponent(baseCurrency)}`,
+    );
+    if (requested !== currentCurrency) return; // currency changed while fetching
+    if (result && typeof result.rate === "number") {
+      els.txRate.value = String(result.rate);
+      els.txRateSource.textContent = t("hint.rateAuto", {
+        source: result.source,
+        date: result.asOf ?? "",
+      });
+    } else {
+      els.txRateSource.textContent = t("hint.rateManual");
+    }
+  } catch {
+    if (requested === currentCurrency) els.txRateSource.textContent = t("hint.rateManual");
+  }
 }
 
 function setCurrency(code) {
