@@ -13,6 +13,14 @@ export interface ImportTransactionRecord {
   readonly category?: KakeiboCategory | undefined;
   readonly occurredAt?: Date | undefined;
   readonly note?: string | undefined;
+  /**
+   * The base-currency equivalent in minor units, required for foreign-currency
+   * rows. Omitted when the entry is already in the base currency (then the
+   * {@link Transaction} defaults its base amount to the original amount).
+   */
+  readonly baseAmountMinor?: number | undefined;
+  /** Currency of {@link baseAmountMinor} (the ledger's base currency). */
+  readonly baseCurrency?: string | undefined;
 }
 
 export interface ImportResult {
@@ -43,6 +51,10 @@ export class ImportTransactions {
           id: this.idGenerator.next(),
           type: record.type,
           amount: Money.ofMinor(record.amountMinor, record.currency),
+          baseAmount:
+            record.baseAmountMinor !== undefined && record.baseCurrency !== undefined
+              ? Money.ofMinor(record.baseAmountMinor, record.baseCurrency)
+              : undefined,
           category: record.category,
           occurredAt: record.occurredAt ?? this.clock.now(),
           note: record.note?.trim() ?? "",
