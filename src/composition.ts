@@ -70,7 +70,7 @@ export function createApp(config: AppConfig): App {
     recordTransaction: new RecordTransaction(transactions, ids, clock, config.defaultCurrency),
     listTransactions: new ListTransactions(transactions),
     deleteTransaction: new DeleteTransaction(transactions),
-    saveMonthlyPlan: new SaveMonthlyPlan(plans, ids),
+    saveMonthlyPlan: new SaveMonthlyPlan(plans, ids, config.defaultCurrency),
     getMonthlyPlan: new GetMonthlyPlan(plans),
     getMonthlySummary: new GetMonthlySummary(transactions, plans, config.defaultCurrency),
     saveReflection: new SaveReflection(reflections, ids),

@@ -111,3 +111,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Agent worktrees (created by background sub-agents)
+.claude/worktrees/

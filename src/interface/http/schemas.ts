@@ -40,6 +40,8 @@ export const saveMonthlyPlanSchema = z.object({
   plannedIncome: nonNegativeAmount,
   savingsGoal: nonNegativeAmount,
   categoryBudgets: z.record(categoryEnum, nonNegativeAmount).optional(),
+  /** Rate to the base currency (required for a foreign-currency plan). */
+  rate: positiveAmount.optional(),
 });
 
 export const saveReflectionSchema = z.object({

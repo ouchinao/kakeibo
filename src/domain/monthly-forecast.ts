@@ -76,9 +76,9 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
     }
   }
 
-  const effectivePlan = plan !== null && plan.currency === currency ? plan : null;
-  const expectedIncome = effectivePlan?.plannedIncome ?? actualIncome;
-  const savingsGoal = effectivePlan?.savingsGoal ?? zero;
+  const effectivePlan = plan !== null && plan.baseCurrency === currency ? plan : null;
+  const expectedIncome = effectivePlan?.basePlannedIncome ?? actualIncome;
+  const savingsGoal = effectivePlan?.baseSavingsGoal ?? zero;
   const projectedExpense = actualExpense.add(recurringRemaining);
   const projectedNet = expectedIncome.subtract(projectedExpense);
 
