@@ -2,6 +2,8 @@
 
 export function amountStep(minorUnits: number): string;
 
+export function formatRate(rate: number): string;
+
 export interface BaseCurrency {
   minorUnits: number;
   symbol: string;

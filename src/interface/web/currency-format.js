@@ -10,6 +10,16 @@ export function amountStep(minorUnits) {
 }
 
 /**
+ * Formats an exchange rate compactly for display, dropping the spurious
+ * floating-point tail (e.g. 0.0066845678 -> "0.0066846", 150 -> "150"). Returns
+ * an empty string for a non-finite rate.
+ */
+export function formatRate(rate) {
+  if (!Number.isFinite(rate)) return "";
+  return String(Number(rate.toPrecision(5)));
+}
+
+/**
  * Converts a foreign major amount into the base currency's minor units using a
  * manual exchange rate: round(amount_major * rate) into `baseMinorUnits`.
  *

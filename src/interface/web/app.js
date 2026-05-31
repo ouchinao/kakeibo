@@ -7,7 +7,13 @@ import {
   deleteTransactionAriaLabel,
   trendChartAriaLabel,
 } from "./a11y-labels.js";
-import { amountStep, convertMinor, formatMoney, renderRatePreview } from "./currency-format.js";
+import {
+  amountStep,
+  convertMinor,
+  formatMoney,
+  formatRate,
+  renderRatePreview,
+} from "./currency-format.js";
 import { errorMessage, resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
@@ -450,6 +456,16 @@ function setCurrency(code) {
  * is fetched once. If no rate is available, we keep showing the base currency
  * and surface a note rather than guessing.
  */
+/** Resets the display currency to the base (incl. the persisted preference). */
+function revertDisplayToBase() {
+  displayCurrency = baseCurrency;
+  displayRate = 1;
+  displayInfo = baseCurrencyInfo;
+  localStorage.setItem(DISPLAY_CURRENCY_STORAGE_KEY, baseCurrency);
+  els.displayCurrency.value = baseCurrency;
+  els.displayRateNote.textContent = t("hint.displayUnavailable", { currency: baseCurrency });
+}
+
 async function setDisplayCurrency(code) {
   displayCurrency = code;
   localStorage.setItem(DISPLAY_CURRENCY_STORAGE_KEY, code);
@@ -473,22 +489,13 @@ async function setDisplayCurrency(code) {
       displayRate = result.rate;
       els.displayRateNote.textContent = t("hint.displayConverted", {
         currency: code,
-        rate: String(result.rate),
+        rate: formatRate(result.rate),
       });
     } else {
-      // No rate: fall back to the base currency for display.
-      displayCurrency = baseCurrency;
-      displayRate = 1;
-      displayInfo = baseCurrencyInfo;
-      els.displayCurrency.value = baseCurrency;
-      els.displayRateNote.textContent = t("hint.displayUnavailable", { currency: baseCurrency });
+      revertDisplayToBase(); // no rate available
     }
   } catch {
-    displayCurrency = baseCurrency;
-    displayRate = 1;
-    displayInfo = baseCurrencyInfo;
-    els.displayCurrency.value = baseCurrency;
-    els.displayRateNote.textContent = t("hint.displayUnavailable", { currency: baseCurrency });
+    revertDisplayToBase();
   }
   refresh();
 }
