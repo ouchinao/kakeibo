@@ -89,6 +89,34 @@ describe("Recurring & Forecast API", () => {
     expect(after.projectedNet.minor).toBe(215000); // stable across posting
   });
 
+  test("rejects a foreign-currency recurring expense without a rate", async () => {
+    const res = await send("POST", "/api/recurring", {
+      name: "Netflix",
+      amount: 15,
+      currency: "USD",
+      category: "WANTS",
+      dayOfMonth: 1,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("projects a foreign recurring expense into the base-currency forecast", async () => {
+    const created = await send("POST", "/api/recurring", {
+      name: "Netflix",
+      amount: 15,
+      currency: "USD",
+      category: "WANTS",
+      dayOfMonth: 1,
+      rate: 150, // USD -> JPY (base)
+    });
+    expect(created.status).toBe(201);
+    expect((await readJson(created)).baseAmount.formatted).toBe("¥2,250");
+
+    const forecast = await readJson(await send("GET", "/api/forecast?month=2026-05"));
+    expect(forecast.currency).toBe("JPY");
+    expect(forecast.recurringRemaining.minor).toBe(2250);
+  });
+
   test("forecast requires a month parameter", async () => {
     expect((await send("GET", "/api/forecast")).status).toBe(400);
   });

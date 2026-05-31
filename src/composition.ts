@@ -2,9 +2,11 @@ import { type Database } from "bun:sqlite";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { getCurrency } from "./domain/currency.ts";
+import { type ExchangeRateProvider } from "./application/ports/exchange-rate-provider.ts";
 import { CreateRecurringExpense } from "./application/use-cases/create-recurring-expense.ts";
 import { DeleteRecurringExpense } from "./application/use-cases/delete-recurring-expense.ts";
 import { DeleteTransaction } from "./application/use-cases/delete-transaction.ts";
+import { GetExchangeRate } from "./application/use-cases/get-exchange-rate.ts";
 import { GetForecast } from "./application/use-cases/get-forecast.ts";
 import { GetMonthlyPlan } from "./application/use-cases/get-monthly-plan.ts";
 import { GetMonthlySummary } from "./application/use-cases/get-monthly-summary.ts";
@@ -25,6 +27,7 @@ import {
 import { SqliteMonthlyPlanRepository } from "./infrastructure/persistence/sqlite-monthly-plan-repository.ts";
 import { SqliteReflectionRepository } from "./infrastructure/persistence/sqlite-reflection-repository.ts";
 import { SqliteTransactionRepository } from "./infrastructure/persistence/sqlite-transaction-repository.ts";
+import { FrankfurterRateProvider } from "./infrastructure/exchange-rate/frankfurter-rate-provider.ts";
 import { SystemClock } from "./infrastructure/system/system-clock.ts";
 import { UuidIdGenerator } from "./infrastructure/system/uuid-id-generator.ts";
 import { createRouter } from "./interface/http/router.ts";
@@ -35,6 +38,11 @@ export interface AppConfig {
   databasePath: string;
   /** ISO 4217 code used when a request omits a currency. */
   defaultCurrency: string;
+  /**
+   * Source of automatic exchange rates. Defaults to the key-less Frankfurter
+   * API; tests inject a deterministic stub so they never touch the network.
+   */
+  rateProvider?: ExchangeRateProvider;
 }
 
 export interface App {
@@ -65,22 +73,24 @@ export function createApp(config: AppConfig): App {
   const postingLog = new SqliteRecurringPostingLog(db);
   const ids = new UuidIdGenerator();
   const clock = new SystemClock();
+  const rateProvider = config.rateProvider ?? new FrankfurterRateProvider();
 
   const fetch = createRouter({
     recordTransaction: new RecordTransaction(transactions, ids, clock, config.defaultCurrency),
     listTransactions: new ListTransactions(transactions),
     deleteTransaction: new DeleteTransaction(transactions),
-    saveMonthlyPlan: new SaveMonthlyPlan(plans, ids),
+    saveMonthlyPlan: new SaveMonthlyPlan(plans, ids, config.defaultCurrency),
     getMonthlyPlan: new GetMonthlyPlan(plans),
     getMonthlySummary: new GetMonthlySummary(transactions, plans, config.defaultCurrency),
     saveReflection: new SaveReflection(reflections, ids),
     getReflection: new GetReflection(reflections),
-    createRecurringExpense: new CreateRecurringExpense(recurring, ids),
+    createRecurringExpense: new CreateRecurringExpense(recurring, ids, config.defaultCurrency),
     listRecurringExpenses: new ListRecurringExpenses(recurring),
     deleteRecurringExpense: new DeleteRecurringExpense(recurring),
     postRecurringExpenses: new PostRecurringExpenses(recurring, postingLog, transactions, ids),
     getForecast: new GetForecast(transactions, plans, recurring, postingLog, config.defaultCurrency),
     getTrend: new GetTrend(transactions, plans, config.defaultCurrency),
+    getExchangeRate: new GetExchangeRate(rateProvider),
     importTransactions: new ImportTransactions(transactions, ids, clock),
     defaultCurrency: config.defaultCurrency,
     serveStatic: createStaticHandler(WEB_ROOT),

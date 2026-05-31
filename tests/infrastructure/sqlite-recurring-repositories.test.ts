@@ -43,6 +43,25 @@ describe("SqliteRecurringExpenseRepository", () => {
     expect(loaded?.active).toBe(true);
   });
 
+  test("round-trips the base-currency amount of a foreign recurring expense", async () => {
+    const repo = new SqliteRecurringExpenseRepository(db);
+    await repo.save(
+      new RecurringExpense({
+        id: "r-usd",
+        name: "Netflix",
+        amount: Money.ofMinor(1500, "USD"),
+        baseAmount: Money.ofMinor(2250, "JPY"),
+        category: KakeiboCategory.WANTS,
+        dayOfMonth: 1,
+        active: true,
+      }),
+    );
+    const loaded = await repo.findById("r-usd");
+    expect(loaded?.amount.currency).toBe("USD");
+    expect(loaded?.baseAmount.currency).toBe("JPY");
+    expect(loaded?.baseAmount.amount).toBe(2250);
+  });
+
   test("lists in insertion order", async () => {
     const repo = new SqliteRecurringExpenseRepository(db);
     await repo.save(rent("a"));

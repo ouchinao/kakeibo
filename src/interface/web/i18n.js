@@ -14,6 +14,8 @@ export const translations = {
     "label.currency": "Currency",
     "label.trendRange": "Trend range",
     "label.rate": "Rate to base currency",
+    "hint.rateAuto": "Auto rate ({source}, {date}) — editable",
+    "hint.rateManual": "No automatic rate; enter it manually",
     "preview.label": "Converted base amount",
     "preview.convertedBase": "≈ {amount}",
     "preview.rateWarning": "Double-check this rate — the converted amount looks unusual.",
@@ -103,6 +105,18 @@ export const translations = {
     "toast.recurringDeleted": "Recurring expense deleted",
     "toast.recurringPosted": "Posted {n} recurring expense(s)",
     "toast.imported": "Imported {n} transaction(s)",
+
+    // Localised messages for the generic *transport* error codes only (see
+    // src/interface/http/json.ts). Detail-bearing domain/application errors
+    // (BusinessRuleError, InvalidValueError, CurrencyMismatchError,
+    // CsvImportError, RouteError, ApplicationError) are intentionally NOT mapped
+    // here: their server message carries specifics (a CSV row, the offending
+    // value…) that errorMessage() surfaces verbatim. `error.GENERIC` is the
+    // last-resort message when no code is mapped and no server message exists.
+    "error.GENERIC": "Something went wrong. Please try again.",
+    "error.VALIDATION_ERROR": "The information you entered is not valid.",
+    "error.NOT_FOUND": "The requested item could not be found.",
+    "error.INTERNAL_ERROR": "An unexpected server error occurred. Please try again.",
   },
   ja: {
     "app.subtitle": "— 心がけて続ける月次家計簿",
@@ -111,6 +125,8 @@ export const translations = {
     "label.currency": "通貨",
     "label.trendRange": "推移の期間",
     "label.rate": "基軸通貨へのレート",
+    "hint.rateAuto": "自動レート（{source}、{date}）— 編集できます",
+    "hint.rateManual": "自動レートなし。手動で入力してください",
     "preview.label": "換算後の基軸通貨額",
     "preview.convertedBase": "≈ {amount}",
     "preview.rateWarning": "レートを確認してください。換算額が異常に見えます。",
@@ -200,6 +216,11 @@ export const translations = {
     "toast.recurringDeleted": "定期支出を削除しました",
     "toast.recurringPosted": "{n}件の定期支出を計上しました",
     "toast.imported": "{n}件の取引を読み込みました",
+
+    "error.GENERIC": "問題が発生しました。もう一度お試しください。",
+    "error.VALIDATION_ERROR": "入力された内容が正しくありません。",
+    "error.NOT_FOUND": "対象の項目が見つかりませんでした。",
+    "error.INTERNAL_ERROR": "サーバーで予期しないエラーが発生しました。もう一度お試しください。",
   },
 };
 
@@ -214,6 +235,26 @@ export function translate(lang, key, vars = {}) {
   return template.replace(/\{(\w+)\}/g, (match, name) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
   );
+}
+
+/**
+ * Localises an API error for display, given the error `code` the server emits
+ * and the raw server-provided `message`.
+ *
+ * Resolution order:
+ *   1. A translation for `error.<code>` in the active language.
+ *   2. The server-provided English `message` (so unmapped codes still inform).
+ *   3. A generic localised message, so a toast is never blank.
+ */
+export function errorMessage(lang, code, fallback) {
+  const table = translations[lang] ?? translations[DEFAULT_LANGUAGE];
+  if (code) {
+    const key = `error.${code}`;
+    const mapped = table[key] ?? translations[DEFAULT_LANGUAGE][key];
+    if (mapped) return mapped;
+  }
+  if (typeof fallback === "string" && fallback.length > 0) return fallback;
+  return table["error.GENERIC"] ?? translations[DEFAULT_LANGUAGE]["error.GENERIC"];
 }
 
 /** Normalises an arbitrary locale string to a supported language code. */

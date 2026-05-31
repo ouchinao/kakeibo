@@ -180,6 +180,9 @@
               </div>
               <div class="field" style="display: flex; align-items: flex-end"><button type="submit" style="width:100%" data-i18n="button.addRecurring">Add recurring</button></div>
             </div>
+            <div class="row" id="rec-rate-field" style="margin-top: 10px; display: none">
+              <div class="field"><label for="rec-rate" data-i18n="label.rate">Rate to base currency</label><input id="rec-rate" type="number" step="0.0001" min="0" /></div>
+            </div>
           </form>
           <div id="recurring-list" style="margin-top: 12px"></div>
         </div>
@@ -212,7 +215,9 @@
             <div class="row" id="tx-rate-field" style="margin-top: 10px; display: none">
               <div class="field">
                 <label for="tx-rate" id="tx-rate-label" data-i18n="label.rate">Rate to base currency</label>
-                <input id="tx-rate" type="number" step="0.0001" min="0" aria-describedby="tx-rate-preview" />
+                <input id="tx-rate" type="number" step="0.0001" min="0" aria-describedby="tx-rate-source tx-rate-preview" />
+                <!-- Source/date of an auto-fetched rate (Frankfurter), or a manual-entry hint. -->
+                <small id="tx-rate-source" class="muted" aria-live="polite"></small>
                 <!-- Live preview of the converted base amount; announced politely. -->
                 <p id="tx-rate-preview" class="rate-preview" aria-live="polite" data-i18n-aria-label="preview.label" aria-label="Converted base amount"></p>
               </div>
@@ -235,6 +240,9 @@
             <div class="row" style="margin-top: 10px">
               <div class="field"><label for="plan-CULTURE" data-i18n="label.cultureBudget">Culture budget</label><input id="plan-CULTURE" class="amount-input" type="number" step="0.01" min="0" /></div>
               <div class="field"><label for="plan-UNEXPECTED" data-i18n="label.unexpectedBudget">Unexpected budget</label><input id="plan-UNEXPECTED" class="amount-input" type="number" step="0.01" min="0" /></div>
+            </div>
+            <div class="row" id="plan-rate-field" style="margin-top: 10px; display: none">
+              <div class="field"><label for="plan-rate" data-i18n="label.rate">Rate to base currency</label><input id="plan-rate" type="number" step="0.0001" min="0" /></div>
             </div>
             <div style="margin-top: 12px"><button type="submit" class="ghost" data-i18n="button.savePlan">Save plan</button></div>
           </form>

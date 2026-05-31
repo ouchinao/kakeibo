@@ -23,7 +23,7 @@ describe("GetMonthlySummary", () => {
     const ids = new SequentialIdGenerator();
     const clock = new FixedClock(new Date("2026-05-15T00:00:00Z"));
     record = new RecordTransaction(txRepo, ids, clock, "JPY");
-    savePlan = new SaveMonthlyPlan(planRepo, ids);
+    savePlan = new SaveMonthlyPlan(planRepo, ids, "JPY");
     summary = new GetMonthlySummary(txRepo, planRepo, "JPY");
   });
 

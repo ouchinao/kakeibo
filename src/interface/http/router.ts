@@ -5,6 +5,7 @@ import { ApplicationError } from "../../application/errors.ts";
 import { type CreateRecurringExpense } from "../../application/use-cases/create-recurring-expense.ts";
 import { type DeleteRecurringExpense } from "../../application/use-cases/delete-recurring-expense.ts";
 import { type DeleteTransaction } from "../../application/use-cases/delete-transaction.ts";
+import { type GetExchangeRate } from "../../application/use-cases/get-exchange-rate.ts";
 import { type GetForecast } from "../../application/use-cases/get-forecast.ts";
 import { type GetMonthlyPlan } from "../../application/use-cases/get-monthly-plan.ts";
 import { type GetMonthlySummary } from "../../application/use-cases/get-monthly-summary.ts";
@@ -52,6 +53,7 @@ export interface RouterDeps {
   postRecurringExpenses: PostRecurringExpenses;
   getForecast: GetForecast;
   getTrend: GetTrend;
+  getExchangeRate: GetExchangeRate;
   importTransactions: ImportTransactions;
   defaultCurrency: string;
   /** Optional static-asset handler for the web UI (returns null to fall through). */
@@ -185,6 +187,16 @@ function buildRoutes(deps: RouterDeps): Route[] {
     },
     {
       method: "GET",
+      pattern: "/api/rate",
+      handler: async (_req, ctx) => {
+        const from = ctx.url.searchParams.get("from");
+        if (!from) throw new RouteError("Missing required 'from' parameter");
+        const to = ctx.url.searchParams.get("to") ?? deps.defaultCurrency;
+        return json(await deps.getExchangeRate.execute(from, to));
+      },
+    },
+    {
+      method: "GET",
       pattern: "/api/summary",
       handler: async (_req, ctx) => {
         const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
@@ -228,6 +240,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           plannedIncomeMinor: toMinor(input.plannedIncome),
           savingsGoalMinor: toMinor(input.savingsGoal),
           categoryBudgetsMinor,
+          rate: input.rate,
         });
         return json(planToDto(plan));
       },
@@ -253,6 +266,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           category: input.category as KakeiboCategory,
           dayOfMonth: input.dayOfMonth,
           active: input.active,
+          rate: input.rate,
         });
         return json(recurringExpenseToDto(recurring), 201);
       },

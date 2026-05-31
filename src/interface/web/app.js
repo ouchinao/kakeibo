@@ -8,7 +8,7 @@ import {
   trendChartAriaLabel,
 } from "./a11y-labels.js";
 import { amountStep, renderRatePreview } from "./currency-format.js";
-import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
+import { errorMessage, resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
@@ -26,13 +26,18 @@ const els = {
   txCategoryField: document.getElementById("tx-category-field"),
   txRateField: document.getElementById("tx-rate-field"),
   txRate: document.getElementById("tx-rate"),
+  txRateSource: document.getElementById("tx-rate-source"),
   txAmount: document.getElementById("tx-amount"),
   txRatePreview: document.getElementById("tx-rate-preview"),
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
+  planRateField: document.getElementById("plan-rate-field"),
+  planRate: document.getElementById("plan-rate"),
   reflectionForm: document.getElementById("reflection-form"),
   forecast: document.getElementById("forecast"),
   recurringForm: document.getElementById("recurring-form"),
+  recRateField: document.getElementById("rec-rate-field"),
+  recRate: document.getElementById("rec-rate"),
   recurringList: document.getElementById("recurring-list"),
   postRecurringBtn: document.getElementById("post-recurring-btn"),
   trend: document.getElementById("trend"),
@@ -61,7 +66,13 @@ const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
 
-/** Thin fetch wrapper that surfaces API error envelopes as thrown errors. */
+/**
+ * Thin fetch wrapper that surfaces API error envelopes as thrown errors.
+ *
+ * The thrown Error carries the server-provided `code` (when present) so the
+ * presentation layer can localise the message. The `message` keeps the raw
+ * English server text as a fallback for codes we do not translate.
+ */
 async function api(path, options = {}) {
   const res = await fetch(path, {
     headers: { "content-type": "application/json" },
@@ -70,9 +81,16 @@ async function api(path, options = {}) {
   if (res.status === 204) return null;
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    const err = new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    err.code = body?.error?.code;
+    throw err;
   }
   return body;
+}
+
+/** Shows a localised toast for a thrown API error (or any Error). */
+function toastError(err) {
+  toast(errorMessage(currentLang, err?.code, err?.message), true);
 }
 
 function toast(message, isError = false) {
@@ -296,7 +314,7 @@ async function refresh() {
     renderRecurring(recurring);
     renderTrend(trend);
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 }
 
@@ -325,6 +343,16 @@ function applyCurrency() {
   const isForeign = currentCurrency !== baseCurrency;
   els.txRateField.style.display = isForeign ? "" : "none";
   els.txRate.required = isForeign;
+  els.recRateField.style.display = isForeign ? "" : "none";
+  els.recRate.required = isForeign;
+  els.planRateField.style.display = isForeign ? "" : "none";
+  els.planRate.required = isForeign;
+  if (isForeign) {
+    void autofillRate();
+  } else {
+    els.txRate.value = "";
+    els.txRateSource.textContent = "";
+  }
   updateRatePreview();
 }
 
@@ -348,6 +376,35 @@ function updateRatePreview() {
     base: baseCurrencyInfo,
     t,
   });
+}
+
+/**
+ * Pre-fills the FX rate from the auto-rate API (Frankfurter) for the active
+ * foreign currency, leaving it editable. Falls back to manual entry when no
+ * automatic rate is available (e.g. an unsupported currency or offline).
+ */
+async function autofillRate() {
+  const requested = currentCurrency;
+  if (requested === baseCurrency) return;
+  try {
+    const result = await api(
+      `/api/rate?from=${encodeURIComponent(requested)}&to=${encodeURIComponent(baseCurrency)}`,
+    );
+    if (requested !== currentCurrency) return; // currency changed while fetching
+    if (result && typeof result.rate === "number") {
+      els.txRate.value = String(result.rate);
+      els.txRateSource.textContent = t("hint.rateAuto", {
+        source: result.source,
+        date: result.asOf ?? "",
+      });
+    } else {
+      els.txRateSource.textContent = t("hint.rateManual");
+    }
+    // Reflect the (possibly auto-filled) rate in the converted-amount preview.
+    updateRatePreview();
+  } catch {
+    if (requested === currentCurrency) els.txRateSource.textContent = t("hint.rateManual");
+  }
 }
 
 function setCurrency(code) {
@@ -407,7 +464,7 @@ els.txForm.addEventListener("submit", async (event) => {
     toast(t("toast.txAdded"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -419,7 +476,7 @@ els.txList.addEventListener("click", async (event) => {
     toast(t("toast.txDeleted"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -436,12 +493,14 @@ els.planForm.addEventListener("submit", async (event) => {
     savingsGoal: Number(document.getElementById("plan-savings").value),
     categoryBudgets,
   };
+  // Send the base-currency rate for a foreign-currency plan.
+  if (currentCurrency !== baseCurrency) body.rate = Number(els.planRate.value);
   try {
     await api(`/api/plans/${currentMonth()}`, { method: "PUT", body: JSON.stringify(body) });
     toast(t("toast.planSaved"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -458,7 +517,7 @@ els.reflectionForm.addEventListener("submit", async (event) => {
     });
     toast(t("toast.reflectionSaved"));
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -471,6 +530,8 @@ els.recurringForm.addEventListener("submit", async (event) => {
     category: document.getElementById("rec-category").value,
     dayOfMonth: Number(document.getElementById("rec-day").value),
   };
+  // Send the base-currency rate for foreign-currency expenses.
+  if (currentCurrency !== baseCurrency) payload.rate = Number(els.recRate.value);
   try {
     await api("/api/recurring", { method: "POST", body: JSON.stringify(payload) });
     els.recurringForm.reset();
@@ -478,7 +539,7 @@ els.recurringForm.addEventListener("submit", async (event) => {
     toast(t("toast.recurringAdded"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -490,7 +551,7 @@ els.recurringList.addEventListener("click", async (event) => {
     toast(t("toast.recurringDeleted"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -500,7 +561,7 @@ els.postRecurringBtn.addEventListener("click", async () => {
     toast(t("toast.recurringPosted", { n: result.posted }));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -522,11 +583,15 @@ els.importInput.addEventListener("change", async (event) => {
       body: csv,
     });
     const body = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(body?.error?.message ?? `Import failed (${res.status})`);
+    if (!res.ok) {
+      const err = new Error(body?.error?.message ?? `Import failed (${res.status})`);
+      err.code = body?.error?.code;
+      throw err;
+    }
     toast(t("toast.imported", { n: body.imported }));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   } finally {
     els.importInput.value = "";
   }
@@ -540,5 +605,5 @@ applyStaticTranslations();
 toggleCategoryField();
 // Load currencies first so the selector + amount steps are ready, then refresh.
 loadCurrencies()
-  .catch((err) => toast(err.message, true))
+  .catch((err) => toastError(err))
   .finally(refresh);

@@ -28,6 +28,25 @@ describe("RecurringExpense", () => {
     expect(() => build({ name: "   " })).toThrow(BusinessRuleError);
   });
 
+  test("baseAmount defaults to the original amount when omitted", () => {
+    const r = build();
+    expect(r.baseAmount.equals(r.amount)).toBe(true);
+  });
+
+  test("keeps a distinct base-currency amount when provided", () => {
+    const r = build({
+      amount: Money.ofMinor(1500, "USD"), // $15.00 subscription
+      baseAmount: Money.ofMinor(2250, "JPY"), // ¥2,250 at booking rate
+    });
+    expect(r.amount.currency).toBe("USD");
+    expect(r.baseAmount.currency).toBe("JPY");
+    expect(r.baseAmount.amount).toBe(2250);
+  });
+
+  test("rejects a non-positive base amount", () => {
+    expect(() => build({ baseAmount: Money.ofMinor(0, "JPY") })).toThrow(BusinessRuleError);
+  });
+
   test("rejects a non-positive amount", () => {
     expect(() => build({ amount: Money.ofMinor(0, "JPY") })).toThrow(BusinessRuleError);
   });

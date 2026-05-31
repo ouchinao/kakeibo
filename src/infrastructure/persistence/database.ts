@@ -42,7 +42,13 @@ export function migrate(db: Database): void {
       currency              TEXT NOT NULL,
       planned_income_minor  INTEGER NOT NULL,
       savings_goal_minor    INTEGER NOT NULL,
-      category_budgets_json TEXT NOT NULL DEFAULT '{}'
+      category_budgets_json TEXT NOT NULL DEFAULT '{}',
+      -- Fields converted to the base currency at save time. Nullable for rows
+      -- created before multi-currency; read falls back to the own-currency ones.
+      base_currency              TEXT,
+      base_planned_income_minor  INTEGER,
+      base_savings_goal_minor    INTEGER,
+      base_category_budgets_json TEXT
     );
 
     CREATE TABLE IF NOT EXISTS reflections (
@@ -58,7 +64,11 @@ export function migrate(db: Database): void {
       currency     TEXT NOT NULL,
       category     TEXT NOT NULL,
       day_of_month INTEGER NOT NULL,
-      active       INTEGER NOT NULL DEFAULT 1
+      active       INTEGER NOT NULL DEFAULT 1,
+      -- Amount converted to the base currency at creation time. Nullable for
+      -- rows created before multi-currency; read falls back to the original.
+      base_amount_minor INTEGER,
+      base_currency     TEXT
     );
 
     -- Records that a recurring expense was auto-posted in a given month,
@@ -78,6 +88,12 @@ export function migrate(db: Database): void {
   // Upgrade older databases that predate the base-currency columns.
   addColumnIfMissing(db, "transactions", "base_amount_minor", "INTEGER");
   addColumnIfMissing(db, "transactions", "base_currency", "TEXT");
+  addColumnIfMissing(db, "recurring_expenses", "base_amount_minor", "INTEGER");
+  addColumnIfMissing(db, "recurring_expenses", "base_currency", "TEXT");
+  addColumnIfMissing(db, "monthly_plans", "base_currency", "TEXT");
+  addColumnIfMissing(db, "monthly_plans", "base_planned_income_minor", "INTEGER");
+  addColumnIfMissing(db, "monthly_plans", "base_savings_goal_minor", "INTEGER");
+  addColumnIfMissing(db, "monthly_plans", "base_category_budgets_json", "TEXT");
 }
 
 /** Adds a column to a table if it does not already exist (idempotent). */
