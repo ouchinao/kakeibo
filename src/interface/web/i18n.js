@@ -101,19 +101,17 @@ export const translations = {
     "toast.recurringPosted": "Posted {n} recurring expense(s)",
     "toast.imported": "Imported {n} transaction(s)",
 
-    // Localised API/validation error messages, keyed by the error `code` the
-    // server emits (see src/interface/http/json.ts). `error.GENERIC` is the
+    // Localised messages for the generic *transport* error codes only (see
+    // src/interface/http/json.ts). Detail-bearing domain/application errors
+    // (BusinessRuleError, InvalidValueError, CurrencyMismatchError,
+    // CsvImportError, RouteError, ApplicationError) are intentionally NOT mapped
+    // here: their server message carries specifics (a CSV row, the offending
+    // value…) that errorMessage() surfaces verbatim. `error.GENERIC` is the
     // last-resort message when no code is mapped and no server message exists.
     "error.GENERIC": "Something went wrong. Please try again.",
     "error.VALIDATION_ERROR": "The information you entered is not valid.",
     "error.NOT_FOUND": "The requested item could not be found.",
     "error.INTERNAL_ERROR": "An unexpected server error occurred. Please try again.",
-    "error.BusinessRuleError": "That action is not allowed by the budgeting rules.",
-    "error.InvalidValueError": "One of the values you entered is invalid.",
-    "error.CurrencyMismatchError": "The currencies of these amounts do not match.",
-    "error.CsvImportError": "The CSV file could not be imported. Please check its format.",
-    "error.RouteError": "The request was missing required information.",
-    "error.ApplicationError": "The request could not be completed.",
   },
   ja: {
     "app.subtitle": "— 心がけて続ける月次家計簿",
@@ -213,12 +211,6 @@ export const translations = {
     "error.VALIDATION_ERROR": "入力された内容が正しくありません。",
     "error.NOT_FOUND": "対象の項目が見つかりませんでした。",
     "error.INTERNAL_ERROR": "サーバーで予期しないエラーが発生しました。もう一度お試しください。",
-    "error.BusinessRuleError": "その操作は家計簿のルールにより許可されていません。",
-    "error.InvalidValueError": "入力された値のいずれかが正しくありません。",
-    "error.CurrencyMismatchError": "これらの金額の通貨が一致しません。",
-    "error.CsvImportError": "CSVファイルを読み込めませんでした。形式をご確認ください。",
-    "error.RouteError": "リクエストに必要な情報が不足しています。",
-    "error.ApplicationError": "リクエストを完了できませんでした。",
   },
 };
 
