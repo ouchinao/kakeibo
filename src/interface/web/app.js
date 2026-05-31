@@ -24,6 +24,8 @@ const els = {
   txForm: document.getElementById("tx-form"),
   txType: document.getElementById("tx-type"),
   txCategoryField: document.getElementById("tx-category-field"),
+  txRateField: document.getElementById("tx-rate-field"),
+  txRate: document.getElementById("tx-rate"),
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
   reflectionForm: document.getElementById("reflection-form"),
@@ -45,6 +47,7 @@ let currentLang = resolveLanguage(
 
 // code -> minorUnits, loaded from /api/currencies (server is the source of truth).
 let currencyDecimals = {};
+let baseCurrency = "JPY";
 let currentCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) ?? "JPY";
 
 /** Translate a key in the active language. */
@@ -304,12 +307,14 @@ function setLanguage(lang) {
   refresh();
 }
 
-/** Sets the amount inputs' step to match the active currency's precision. */
-function applyAmountStep() {
+/** Reflects the active currency in the amount inputs and the FX rate field. */
+function applyCurrency() {
   const step = amountStep(currencyDecimals[currentCurrency] ?? 2);
   for (const input of document.querySelectorAll(".amount-input")) {
     input.step = step;
   }
+  // The base-currency conversion rate is only relevant for foreign entries.
+  els.txRateField.style.display = currentCurrency === baseCurrency ? "none" : "";
 }
 
 function setCurrency(code) {
@@ -317,7 +322,7 @@ function setCurrency(code) {
   currentCurrency = code;
   localStorage.setItem(CURRENCY_STORAGE_KEY, code);
   els.currency.value = code;
-  applyAmountStep();
+  applyCurrency();
   refresh();
 }
 
@@ -325,6 +330,7 @@ function setCurrency(code) {
 async function loadCurrencies() {
   const currencies = await api("/api/currencies");
   currencyDecimals = Object.fromEntries(currencies.map((c) => [c.code, c.minorUnits]));
+  baseCurrency = currencies.find((c) => c.isBase)?.code ?? currencies[0]?.code ?? "JPY";
   els.currency.innerHTML = currencies
     .map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`)
     .join("");
@@ -332,7 +338,7 @@ async function loadCurrencies() {
     currentCurrency = currencies[0]?.code ?? "JPY";
   }
   els.currency.value = currentCurrency;
-  applyAmountStep();
+  applyCurrency();
 }
 
 // --- Event wiring -----------------------------------------------------------
@@ -354,6 +360,8 @@ els.txForm.addEventListener("submit", async (event) => {
     occurredAt: new Date(`${currentMonth()}-15T12:00:00Z`).toISOString(),
   };
   if (type === "EXPENSE") payload.category = document.getElementById("tx-category").value;
+  // Send the base-currency rate for foreign-currency entries.
+  if (currentCurrency !== baseCurrency) payload.rate = Number(els.txRate.value);
   try {
     await api("/api/transactions", { method: "POST", body: JSON.stringify(payload) });
     els.txForm.reset();

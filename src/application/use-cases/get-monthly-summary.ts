@@ -20,7 +20,7 @@ export class GetMonthlySummary {
     private readonly defaultCurrency: string,
   ) {}
 
-  async execute(month: string | YearMonth, currency?: string): Promise<MonthlySummary> {
+  async execute(month: string | YearMonth): Promise<MonthlySummary> {
     const yearMonth = typeof month === "string" ? YearMonth.parse(month) : month;
 
     const [transactions, plan] = await Promise.all([
@@ -28,9 +28,10 @@ export class GetMonthlySummary {
       this.plans.findByMonth(yearMonth),
     ]);
 
+    // Aggregate in the base currency; transactions carry their baseAmount.
     return buildMonthlySummary({
       month: yearMonth,
-      currency: plan?.currency ?? currency ?? this.defaultCurrency,
+      currency: this.defaultCurrency,
       transactions,
       plan,
     });

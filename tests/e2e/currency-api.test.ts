@@ -67,16 +67,19 @@ describe("Currency API", () => {
     expect(res.status).toBe(400);
   });
 
-  test("summary reflects the requested currency override", async () => {
-    await request("POST", "/api/transactions", {
+  test("aggregates a foreign-currency transaction into the base currency via its rate", async () => {
+    const created = await request("POST", "/api/transactions", {
       type: "EXPENSE",
       amount: 12.34,
       currency: "USD",
       category: "WANTS",
       occurredAt: "2026-05-10T00:00:00Z",
+      rate: 150, // USD -> JPY (base)
     });
-    const summary = await readJson(await request("GET", "/api/summary?month=2026-05&currency=USD"));
-    expect(summary.currency).toBe("USD");
-    expect(summary.totalExpense.minor).toBe(1234);
+    expect((await readJson(created)).baseAmount.formatted).toBe("¥1,851");
+
+    const summary = await readJson(await request("GET", "/api/summary?month=2026-05"));
+    expect(summary.currency).toBe("JPY"); // base currency
+    expect(summary.totalExpense.minor).toBe(1851);
   });
 });

@@ -20,7 +20,7 @@ describe("transaction use cases", () => {
     repo = new InMemoryTransactionRepository();
     clock = new FixedClock(new Date("2026-05-15T09:00:00Z"));
     const ids = new SequentialIdGenerator();
-    record = new RecordTransaction(repo, ids, clock);
+    record = new RecordTransaction(repo, ids, clock, "JPY");
     list = new ListTransactions(repo);
     remove = new DeleteTransaction(repo);
   });

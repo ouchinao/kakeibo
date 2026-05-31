@@ -60,29 +60,31 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
   const { month, currency, transactions, plan } = input;
   const zero = Money.zero(currency);
 
+  // `currency` is the base currency; transactions carry their amount converted
+  // to it (baseAmount), so mixed-currency months aggregate correctly. A tx
+  // whose baseAmount is in another currency (legacy data) is skipped rather
+  // than crashing. A plan only applies when it is denominated in this currency.
+  const effectivePlan = plan !== null && plan.currency === currency ? plan : null;
+
   let totalIncome = zero;
   let totalExpense = zero;
   const spentByCategory = new Map<KakeiboCategory, Money>();
 
   for (const tx of transactions) {
-    // This is a single-currency view: a transaction recorded in another
-    // currency is not representable here, so it is skipped rather than
-    // crashing the summary with a CurrencyMismatchError (consistent with
-    // buildMonthlyForecast).
-    if (tx.amount.currency !== currency) continue;
+    if (tx.baseAmount.currency !== currency) continue;
 
     if (tx.isIncome()) {
-      totalIncome = totalIncome.add(tx.amount);
+      totalIncome = totalIncome.add(tx.baseAmount);
     } else {
-      totalExpense = totalExpense.add(tx.amount);
+      totalExpense = totalExpense.add(tx.baseAmount);
       const category = tx.category as KakeiboCategory;
       const current = spentByCategory.get(category) ?? zero;
-      spentByCategory.set(category, current.add(tx.amount));
+      spentByCategory.set(category, current.add(tx.baseAmount));
     }
   }
 
   const categories: CategoryBreakdown[] = ALL_CATEGORIES.map((category) => {
-    const budget = plan?.budgetFor(category) ?? zero;
+    const budget = effectivePlan?.budgetFor(category) ?? zero;
     const spent = spentByCategory.get(category) ?? zero;
     const remaining = budget.subtract(spent);
     return {
@@ -95,9 +97,9 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
     };
   });
 
-  const plannedIncome = plan?.plannedIncome ?? zero;
-  const savingsGoal = plan?.savingsGoal ?? zero;
-  const availableToSpend = plan?.availableToSpend() ?? zero;
+  const plannedIncome = effectivePlan?.plannedIncome ?? zero;
+  const savingsGoal = effectivePlan?.savingsGoal ?? zero;
+  const availableToSpend = effectivePlan?.availableToSpend() ?? zero;
   const actualSavings = totalIncome.subtract(totalExpense);
 
   return {
@@ -106,13 +108,13 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
     totalIncome,
     totalExpense,
     netBalance: actualSavings,
-    hasPlan: plan !== null,
+    hasPlan: effectivePlan !== null,
     plannedIncome,
     savingsGoal,
     availableToSpend,
     remainingToSpend: availableToSpend.subtract(totalExpense),
     actualSavings,
-    savingsGoalMet: plan !== null && actualSavings.compareTo(savingsGoal) >= 0,
+    savingsGoalMet: effectivePlan !== null && actualSavings.compareTo(savingsGoal) >= 0,
     categories,
   };
 }

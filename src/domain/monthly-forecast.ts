@@ -50,21 +50,23 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
   const { month, currency, plan, transactions, recurringExpenses, isPosted } = input;
   const zero = Money.zero(currency);
 
+  // `currency` is the base currency; transactions carry baseAmount converted to
+  // it. A tx whose baseAmount is in another currency (legacy) is skipped.
   let actualIncome = zero;
   let actualExpense = zero;
   for (const tx of transactions) {
+    if (tx.baseAmount.currency !== currency) continue;
     if (tx.isIncome()) {
-      actualIncome = actualIncome.add(tx.amount);
+      actualIncome = actualIncome.add(tx.baseAmount);
     } else {
-      actualExpense = actualExpense.add(tx.amount);
+      actualExpense = actualExpense.add(tx.baseAmount);
     }
   }
 
   let recurringRemaining = zero;
   for (const recurring of recurringExpenses) {
-    // The forecast is single-currency: recurring expenses defined in another
-    // currency are not representable here, so they are skipped rather than
-    // crashing the whole forecast with a CurrencyMismatchError.
+    // Recurring expenses don't yet store a base-currency amount, so only those
+    // already denominated in the base currency are projected (others skipped).
     if (
       recurring.active &&
       !isPosted(recurring.id) &&
@@ -74,8 +76,9 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
     }
   }
 
-  const expectedIncome = plan?.plannedIncome ?? actualIncome;
-  const savingsGoal = plan?.savingsGoal ?? zero;
+  const effectivePlan = plan !== null && plan.currency === currency ? plan : null;
+  const expectedIncome = effectivePlan?.plannedIncome ?? actualIncome;
+  const savingsGoal = effectivePlan?.savingsGoal ?? zero;
   const projectedExpense = actualExpense.add(recurringRemaining);
   const projectedNet = expectedIncome.subtract(projectedExpense);
 

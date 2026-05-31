@@ -23,6 +23,8 @@ export const recordTransactionSchema = z
     category: categoryEnum.optional(),
     occurredAt: z.string().datetime({ offset: true }).optional(),
     note: z.string().max(500).optional(),
+    /** Rate to the base currency (for foreign-currency entries). */
+    rate: positiveAmount.optional(),
   })
   .superRefine((value, ctx) => {
     if (value.type === TransactionType.EXPENSE && value.category === undefined) {

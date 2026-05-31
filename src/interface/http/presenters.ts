@@ -44,6 +44,7 @@ export function transactionToDto(tx: Transaction) {
     id: tx.id,
     type: tx.type,
     amount: moneyToDto(tx.amount),
+    baseAmount: moneyToDto(tx.baseAmount),
     category: tx.category ?? null,
     occurredAt: tx.occurredAt.toISOString(),
     note: tx.note,
