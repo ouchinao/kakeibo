@@ -12,6 +12,11 @@ import { type YearMonth } from "../../domain/year-month.ts";
  */
 export interface TransactionRepository {
   save(transaction: Transaction): Promise<void>;
+  /**
+   * Persists several new transactions atomically: either all are written or,
+   * if any insert fails, none are (the batch is rolled back).
+   */
+  saveMany(transactions: readonly Transaction[]): Promise<void>;
   findById(id: string): Promise<Transaction | null>;
   /** Returns all transactions that occurred within the given month. */
   findByMonth(month: YearMonth): Promise<Transaction[]>;

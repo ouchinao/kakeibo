@@ -23,11 +23,11 @@ export interface ImportResult {
 /**
  * Bulk-imports transactions.
  *
- * Validation is fail-fast: every record is built into a {@link Transaction}
- * (and thus domain-validated) before any is saved, so an invalid row aborts
- * the import before a single write happens. Note this is not a database
- * transaction — a persistence I/O failure partway through the save loop could
- * still leave earlier rows written.
+ * Fully atomic: every record is first built into a {@link Transaction} (so a
+ * domain-invalid row aborts before any write), then the whole batch is
+ * persisted via {@link TransactionRepository.saveMany}, which commits all rows
+ * or none. A malformed row or a mid-batch persistence failure leaves the
+ * database unchanged.
  */
 export class ImportTransactions {
   constructor(
@@ -49,9 +49,8 @@ export class ImportTransactions {
         }),
     );
 
-    for (const transaction of built) {
-      await this.transactions.save(transaction);
-    }
+    // Persist the whole batch atomically: a failure leaves nothing written.
+    await this.transactions.saveMany(built);
 
     return { imported: built.length, transactions: built };
   }
