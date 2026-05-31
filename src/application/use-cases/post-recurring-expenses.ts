@@ -45,6 +45,9 @@ export class PostRecurringExpenses {
         id: this.idGenerator.next(),
         type: TransactionType.EXPENSE,
         amount: recurring.amount,
+        // Carry the recurring expense's base-currency equivalent so a posted
+        // foreign expense aggregates into the base-currency summary.
+        baseAmount: recurring.baseAmount,
         category: recurring.category,
         occurredAt: recurring.scheduledDate(yearMonth),
         note: recurring.name,

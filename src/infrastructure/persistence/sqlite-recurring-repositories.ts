@@ -16,13 +16,21 @@ interface RecurringRow {
   category: string;
   day_of_month: number;
   active: number;
+  base_amount_minor: number | null;
+  base_currency: string | null;
 }
 
 function toDomain(row: RecurringRow): RecurringExpense {
+  // Legacy rows have no base amount; the entity then defaults it to the amount.
+  const baseAmount =
+    row.base_amount_minor !== null && row.base_currency !== null
+      ? Money.ofMinor(row.base_amount_minor, row.base_currency)
+      : undefined;
   return new RecurringExpense({
     id: row.id,
     name: row.name,
     amount: Money.ofMinor(row.amount_minor, row.currency),
+    baseAmount,
     category: toKakeiboCategory(row.category),
     dayOfMonth: row.day_of_month,
     active: row.active === 1,
@@ -37,8 +45,10 @@ export class SqliteRecurringExpenseRepository implements RecurringExpenseReposit
     this.db
       .query(
         `INSERT OR REPLACE INTO recurring_expenses
-           (id, name, amount_minor, currency, category, day_of_month, active)
-         VALUES ($id, $name, $amount, $currency, $category, $day, $active)`,
+           (id, name, amount_minor, currency, category, day_of_month, active,
+            base_amount_minor, base_currency)
+         VALUES ($id, $name, $amount, $currency, $category, $day, $active,
+            $baseAmount, $baseCurrency)`,
       )
       .run({
         $id: recurring.id,
@@ -48,6 +58,8 @@ export class SqliteRecurringExpenseRepository implements RecurringExpenseReposit
         $category: recurring.category,
         $day: recurring.dayOfMonth,
         $active: recurring.active ? 1 : 0,
+        $baseAmount: recurring.baseAmount.amount,
+        $baseCurrency: recurring.baseAmount.currency,
       });
   }
 
