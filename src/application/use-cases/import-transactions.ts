@@ -21,11 +21,13 @@ export interface ImportResult {
 }
 
 /**
- * Bulk-imports transactions atomically.
+ * Bulk-imports transactions.
  *
- * Every record is built into a {@link Transaction} first, so domain invariant
- * violations surface before anything is persisted — a malformed row aborts the
- * whole import rather than leaving a partial result.
+ * Validation is fail-fast: every record is built into a {@link Transaction}
+ * (and thus domain-validated) before any is saved, so an invalid row aborts
+ * the import before a single write happens. Note this is not a database
+ * transaction — a persistence I/O failure partway through the save loop could
+ * still leave earlier rows written.
  */
 export class ImportTransactions {
   constructor(

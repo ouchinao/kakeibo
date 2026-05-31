@@ -70,9 +70,13 @@ export function csvToImportRecords(
     }
     const type = rawType as TransactionType;
 
-    const amount = Number(get(cols.amount));
-    if (!Number.isFinite(amount)) {
-      throw new CsvImportError(`Row ${line}: invalid amount "${get(cols.amount)}"`);
+    // Validate the amount at the CSV layer so the error carries the row number.
+    // An empty, non-numeric, or non-positive amount is rejected here rather
+    // than surfacing later as a generic domain error without row context.
+    const amountRaw = get(cols.amount);
+    const amount = Number(amountRaw);
+    if (amountRaw === "" || !Number.isFinite(amount) || amount <= 0) {
+      throw new CsvImportError(`Row ${line}: invalid amount "${amountRaw}"`);
     }
 
     const currency = get(cols.currency) || defaultCurrency;

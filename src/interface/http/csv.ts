@@ -42,6 +42,12 @@ export function parseCsv(input: string): string[][] {
         }
         inQuotes = false;
         i += 1;
+        // After a closing quote only a delimiter, newline, or end-of-input is
+        // valid; anything else means the quoting is malformed.
+        const next = text[i];
+        if (next !== undefined && next !== "," && next !== "\n") {
+          throw new Error("Malformed CSV: unexpected text after a closing quote");
+        }
         continue;
       }
       field += char;
