@@ -10,7 +10,8 @@ import {
  * transactions and plan, then delegating the calculation to the domain.
  *
  * The working currency comes from the month's plan when present; otherwise the
- * configured default currency is used (so an unplanned month still summarises).
+ * caller-supplied `currency` override is used, falling back to the configured
+ * default (so an unplanned month still summarises in the viewer's currency).
  */
 export class GetMonthlySummary {
   constructor(
@@ -19,7 +20,7 @@ export class GetMonthlySummary {
     private readonly defaultCurrency: string,
   ) {}
 
-  async execute(month: string | YearMonth): Promise<MonthlySummary> {
+  async execute(month: string | YearMonth, currency?: string): Promise<MonthlySummary> {
     const yearMonth = typeof month === "string" ? YearMonth.parse(month) : month;
 
     const [transactions, plan] = await Promise.all([
@@ -29,7 +30,7 @@ export class GetMonthlySummary {
 
     return buildMonthlySummary({
       month: yearMonth,
-      currency: plan?.currency ?? this.defaultCurrency,
+      currency: plan?.currency ?? currency ?? this.defaultCurrency,
       transactions,
       plan,
     });

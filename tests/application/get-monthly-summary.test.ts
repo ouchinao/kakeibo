@@ -106,4 +106,18 @@ describe("GetMonthlySummary", () => {
     expect(result.availableToSpend.amount).toBe(0);
     expect(result.savingsGoalMet).toBe(false);
   });
+
+  test("honours a currency override for an unplanned month", async () => {
+    await record.execute({
+      type: TransactionType.EXPENSE,
+      amountMinor: 1234,
+      currency: "USD",
+      category: KakeiboCategory.WANTS,
+      occurredAt: new Date("2026-05-10T00:00:00Z"),
+    });
+
+    const result = await summary.execute("2026-05", "USD");
+    expect(result.currency).toBe("USD");
+    expect(result.totalExpense.amount).toBe(1234);
+  });
 });

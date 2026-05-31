@@ -44,3 +44,8 @@ export function getCurrency(code: string): CurrencyDefinition {
   }
   return definition;
 }
+
+/** All supported currencies, in registry order. */
+export function listCurrencies(): CurrencyDefinition[] {
+  return Object.values(CURRENCIES);
+}

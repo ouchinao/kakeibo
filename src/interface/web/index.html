@@ -115,6 +115,10 @@
           <label for="month" data-i18n="label.month">Month</label>
           <input type="month" id="month" />
         </div>
+        <div class="field" style="max-width: 160px">
+          <label for="currency" data-i18n="label.currency">Currency</label>
+          <select id="currency"></select>
+        </div>
       </div>
 
       <section class="grid" id="stats"></section>
@@ -159,7 +163,7 @@
               <div class="field" style="flex: 1 1 100%"><label for="rec-name" data-i18n="label.recurringName">Name</label><input id="rec-name" data-i18n-placeholder="placeholder.recurringName" placeholder="Rent, Netflix…" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label for="rec-amount" data-i18n="label.amount">Amount</label><input id="rec-amount" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="rec-amount" data-i18n="label.amount">Amount</label><input id="rec-amount" class="amount-input" type="number" step="0.01" min="0" required /></div>
               <div class="field"><label for="rec-day" data-i18n="label.day">Day</label><input id="rec-day" type="number" min="1" max="28" value="1" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
@@ -189,7 +193,7 @@
                   <option value="INCOME" data-i18n="type.income">Income</option>
                 </select>
               </div>
-              <div class="field"><label for="tx-amount" data-i18n="label.amount">Amount</label><input name="amount" id="tx-amount" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="tx-amount" data-i18n="label.amount">Amount</label><input name="amount" id="tx-amount" class="amount-input" type="number" step="0.01" min="0" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
               <div class="field" id="tx-category-field"><label for="tx-category" data-i18n="label.category">Category</label>
@@ -210,16 +214,16 @@
           <h2 data-i18n="heading.monthlyPlan">Monthly plan</h2>
           <form id="plan-form">
             <div class="row">
-              <div class="field"><label for="plan-income" data-i18n="label.plannedIncome">Planned income</label><input id="plan-income" type="number" step="0.01" min="0" required /></div>
-              <div class="field"><label for="plan-savings" data-i18n="label.savingsGoal">Savings goal</label><input id="plan-savings" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="plan-income" data-i18n="label.plannedIncome">Planned income</label><input id="plan-income" class="amount-input" type="number" step="0.01" min="0" required /></div>
+              <div class="field"><label for="plan-savings" data-i18n="label.savingsGoal">Savings goal</label><input id="plan-savings" class="amount-input" type="number" step="0.01" min="0" required /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label for="plan-NEEDS" data-i18n="label.needsBudget">Needs budget</label><input id="plan-NEEDS" type="number" step="0.01" min="0" /></div>
-              <div class="field"><label for="plan-WANTS" data-i18n="label.wantsBudget">Wants budget</label><input id="plan-WANTS" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-NEEDS" data-i18n="label.needsBudget">Needs budget</label><input id="plan-NEEDS" class="amount-input" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-WANTS" data-i18n="label.wantsBudget">Wants budget</label><input id="plan-WANTS" class="amount-input" type="number" step="0.01" min="0" /></div>
             </div>
             <div class="row" style="margin-top: 10px">
-              <div class="field"><label for="plan-CULTURE" data-i18n="label.cultureBudget">Culture budget</label><input id="plan-CULTURE" type="number" step="0.01" min="0" /></div>
-              <div class="field"><label for="plan-UNEXPECTED" data-i18n="label.unexpectedBudget">Unexpected budget</label><input id="plan-UNEXPECTED" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-CULTURE" data-i18n="label.cultureBudget">Culture budget</label><input id="plan-CULTURE" class="amount-input" type="number" step="0.01" min="0" /></div>
+              <div class="field"><label for="plan-UNEXPECTED" data-i18n="label.unexpectedBudget">Unexpected budget</label><input id="plan-UNEXPECTED" class="amount-input" type="number" step="0.01" min="0" /></div>
             </div>
             <div style="margin-top: 12px"><button type="submit" class="ghost" data-i18n="button.savePlan">Save plan</button></div>
           </form>

@@ -1,3 +1,4 @@
+import { type CurrencyDefinition } from "../../domain/currency.ts";
 import { type Money } from "../../domain/money.ts";
 import { type MonthlyForecast } from "../../domain/monthly-forecast.ts";
 import { type MonthlyPlan } from "../../domain/monthly-plan.ts";
@@ -27,6 +28,14 @@ export function moneyToDto(money: Money): MoneyDto {
     major: money.toMajor(),
     currency: money.currency,
     formatted: money.format(),
+  };
+}
+
+export function currencyToDto(currency: CurrencyDefinition) {
+  return {
+    code: currency.code,
+    minorUnits: currency.minorUnits,
+    symbol: currency.symbol,
   };
 }
 
