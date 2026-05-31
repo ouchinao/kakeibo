@@ -7,17 +7,20 @@ import {
   deleteTransactionAriaLabel,
   trendChartAriaLabel,
 } from "./a11y-labels.js";
-import { amountStep, renderRatePreview } from "./currency-format.js";
+import { amountStep, convertMinor, formatMoney, renderRatePreview } from "./currency-format.js";
 import { errorMessage, resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
 const LANGUAGE_STORAGE_KEY = "kakeibo-lang";
 const CURRENCY_STORAGE_KEY = "kakeibo-currency";
+const DISPLAY_CURRENCY_STORAGE_KEY = "kakeibo-display-currency";
 
 const els = {
   lang: document.getElementById("lang"),
   currency: document.getElementById("currency"),
+  displayCurrency: document.getElementById("display-currency"),
+  displayRateNote: document.getElementById("display-rate-note"),
   month: document.getElementById("month"),
   stats: document.getElementById("stats"),
   categories: document.getElementById("categories"),
@@ -54,10 +57,18 @@ let currentLang = resolveLanguage(
 
 // code -> minorUnits, loaded from /api/currencies (server is the source of truth).
 let currencyDecimals = {};
+// code -> { minorUnits, symbol } for client-side formatting/conversion.
+let currencyInfo = {};
 let baseCurrency = "JPY";
 // Base currency { minorUnits, symbol } for formatting the converted-amount preview.
 let baseCurrencyInfo = { minorUnits: 0, symbol: "¥" };
+// The currency new entries are recorded in (the "entry" currency).
 let currentCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) ?? "JPY";
+// The currency monthly totals are *displayed* in (read-only conversion of the
+// base-currency figures). Defaults to the base currency once it is known.
+let displayCurrency = localStorage.getItem(DISPLAY_CURRENCY_STORAGE_KEY) ?? "JPY";
+let displayRate = 1; // base -> displayCurrency
+let displayInfo = baseCurrencyInfo;
 
 /** Translate a key in the active language. */
 const t = (key, vars) => translate(currentLang, key, vars);
@@ -105,18 +116,31 @@ function stat(label, value, mood) {
   return `<div class="stat"><div class="label">${label}</div><div class="value${moodClass}">${value}</div></div>`;
 }
 
+/**
+ * Formats a base-currency Money DTO for display, converting it to the chosen
+ * display currency when one is selected. Falls back to the server-formatted
+ * base amount when display == base or no conversion rate is available, so totals
+ * are never shown blank or wrong.
+ */
+function displayMoney(m) {
+  if (!m) return "";
+  if (displayCurrency === baseCurrency) return m.formatted;
+  const minor = convertMinor(m.minor, baseCurrencyInfo.minorUnits, displayRate, displayInfo.minorUnits);
+  return minor === null ? m.formatted : formatMoney(minor, displayInfo);
+}
+
 function renderSummary(summary) {
   const savingsMood = summary.savingsGoalMet ? "good" : "bad";
   const remainingMood = summary.remainingToSpend.minor < 0 ? "bad" : "good";
   els.stats.innerHTML = [
-    stat(t("stat.availableToSpend"), summary.availableToSpend.formatted),
-    stat(t("stat.remainingToSpend"), summary.remainingToSpend.formatted, remainingMood),
-    stat(t("stat.income"), summary.totalIncome.formatted),
-    stat(t("stat.expense"), summary.totalExpense.formatted),
-    stat(t("stat.actualSavings"), summary.actualSavings.formatted, savingsMood),
+    stat(t("stat.availableToSpend"), displayMoney(summary.availableToSpend)),
+    stat(t("stat.remainingToSpend"), displayMoney(summary.remainingToSpend), remainingMood),
+    stat(t("stat.income"), displayMoney(summary.totalIncome)),
+    stat(t("stat.expense"), displayMoney(summary.totalExpense)),
+    stat(t("stat.actualSavings"), displayMoney(summary.actualSavings), savingsMood),
     stat(
       t("stat.savingsGoal"),
-      `${summary.savingsGoal.formatted} ${summary.savingsGoalMet ? "✓" : ""}`,
+      `${displayMoney(summary.savingsGoal)} ${summary.savingsGoalMet ? "✓" : ""}`,
       savingsMood,
     ),
   ].join("");
@@ -128,8 +152,8 @@ function renderSummary(summary) {
       const overClass = c.overBudget ? " over" : "";
       const budgetText =
         budget > 0
-          ? t("msg.budgetUsage", { spent: c.spent.formatted, budget: c.budget.formatted, pct })
-          : t("msg.noBudget", { spent: c.spent.formatted });
+          ? t("msg.budgetUsage", { spent: displayMoney(c.spent), budget: displayMoney(c.budget), pct })
+          : t("msg.noBudget", { spent: displayMoney(c.spent) });
       return `
         <div class="cat-row">
           <div class="cat-head">
@@ -179,10 +203,10 @@ function renderForecast(forecast) {
   const netMood = forecast.onTrack ? "good" : "bad";
   els.forecast.innerHTML = `
     <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
-      ${stat(t("forecast.projectedNet"), `${forecast.projectedNet.formatted} ${forecast.onTrack ? "✓" : ""}`, netMood)}
-      ${stat(t("forecast.projectedExpense"), forecast.projectedExpense.formatted)}
-      ${stat(t("forecast.recurringRemaining"), forecast.recurringRemaining.formatted)}
-      ${stat(t("forecast.expectedIncome"), forecast.expectedIncome.formatted)}
+      ${stat(t("forecast.projectedNet"), `${displayMoney(forecast.projectedNet)} ${forecast.onTrack ? "✓" : ""}`, netMood)}
+      ${stat(t("forecast.projectedExpense"), displayMoney(forecast.projectedExpense))}
+      ${stat(t("forecast.recurringRemaining"), displayMoney(forecast.recurringRemaining))}
+      ${stat(t("forecast.expectedIncome"), displayMoney(forecast.expectedIncome))}
     </div>
     <p class="muted" style="margin: 12px 0 0; font-size: 0.85rem">
       ${t("forecast.note")}
@@ -245,9 +269,9 @@ function renderTrend(points) {
       const center = i * groupW + groupW / 2;
       const month = p.month.slice(2); // YY-MM
       return `
-        ${bar(center - barW - 1, p.totalIncome.minor, "var(--accent)", `${t("type.income")} ${p.totalIncome.formatted}`)}
-        ${bar(center, p.totalExpense.minor, "var(--warn)", `${t("type.expense")} ${p.totalExpense.formatted}`)}
-        ${bar(center + barW + 1, p.actualSavings.minor, "#60a5fa", `${t("trend.savings")} ${p.actualSavings.formatted}`)}
+        ${bar(center - barW - 1, p.totalIncome.minor, "var(--accent)", `${t("type.income")} ${displayMoney(p.totalIncome)}`)}
+        ${bar(center, p.totalExpense.minor, "var(--warn)", `${t("type.expense")} ${displayMoney(p.totalExpense)}`)}
+        ${bar(center + barW + 1, p.actualSavings.minor, "#60a5fa", `${t("trend.savings")} ${displayMoney(p.actualSavings)}`)}
         <text x="${center}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${month}</text>`;
     })
     .join("");
@@ -337,6 +361,10 @@ function applyCurrency() {
   for (const input of document.querySelectorAll(".amount-input")) {
     input.step = step;
   }
+  // Show the chosen entry-currency unit at the end of each amount field.
+  for (const unit of document.querySelectorAll(".unit-suffix")) {
+    unit.textContent = currentCurrency;
+  }
   // The base-currency conversion rate is only relevant for foreign entries,
   // where it is mandatory (we never guess a rate). Toggle `required` alongside
   // visibility so a hidden field can never block submission of a base entry.
@@ -416,27 +444,100 @@ function setCurrency(code) {
   refresh();
 }
 
-/** Loads supported currencies from the API and populates the selector. */
+/**
+ * Switches the *display* currency: monthly totals are re-rendered converted to
+ * it. The base currency is the identity; for any other, the base->display rate
+ * is fetched once. If no rate is available, we keep showing the base currency
+ * and surface a note rather than guessing.
+ */
+async function setDisplayCurrency(code) {
+  displayCurrency = code;
+  localStorage.setItem(DISPLAY_CURRENCY_STORAGE_KEY, code);
+  els.displayCurrency.value = code;
+
+  if (code === baseCurrency) {
+    displayRate = 1;
+    displayInfo = baseCurrencyInfo;
+    els.displayRateNote.textContent = "";
+    refresh();
+    return;
+  }
+
+  displayInfo = currencyInfo[code] ?? baseCurrencyInfo;
+  try {
+    const result = await api(
+      `/api/rate?from=${encodeURIComponent(baseCurrency)}&to=${encodeURIComponent(code)}`,
+    );
+    if (els.displayCurrency.value !== code) return; // changed while fetching
+    if (result && typeof result.rate === "number") {
+      displayRate = result.rate;
+      els.displayRateNote.textContent = t("hint.displayConverted", {
+        currency: code,
+        rate: String(result.rate),
+      });
+    } else {
+      // No rate: fall back to the base currency for display.
+      displayCurrency = baseCurrency;
+      displayRate = 1;
+      displayInfo = baseCurrencyInfo;
+      els.displayCurrency.value = baseCurrency;
+      els.displayRateNote.textContent = t("hint.displayUnavailable", { currency: baseCurrency });
+    }
+  } catch {
+    displayCurrency = baseCurrency;
+    displayRate = 1;
+    displayInfo = baseCurrencyInfo;
+    els.displayCurrency.value = baseCurrency;
+    els.displayRateNote.textContent = t("hint.displayUnavailable", { currency: baseCurrency });
+  }
+  refresh();
+}
+
+/** Wraps each amount input so the entry-currency unit can sit at its end. */
+function setupAmountUnitSuffixes() {
+  for (const input of document.querySelectorAll(".amount-input")) {
+    if (input.parentElement?.classList.contains("amount-wrap")) continue;
+    const wrap = document.createElement("span");
+    wrap.className = "amount-wrap";
+    input.replaceWith(wrap);
+    wrap.append(input);
+    const unit = document.createElement("span");
+    unit.className = "unit-suffix";
+    wrap.append(unit);
+  }
+}
+
+/** Loads supported currencies from the API and populates the selectors. */
 async function loadCurrencies() {
   const currencies = await api("/api/currencies");
   currencyDecimals = Object.fromEntries(currencies.map((c) => [c.code, c.minorUnits]));
+  currencyInfo = Object.fromEntries(
+    currencies.map((c) => [c.code, { minorUnits: c.minorUnits, symbol: c.symbol }]),
+  );
   const base = currencies.find((c) => c.isBase) ?? currencies[0];
   baseCurrency = base?.code ?? "JPY";
   baseCurrencyInfo = { minorUnits: base?.minorUnits ?? 0, symbol: base?.symbol ?? "¥" };
-  els.currency.innerHTML = currencies
-    .map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`)
-    .join("");
+
+  const options = currencies.map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`).join("");
+  els.currency.innerHTML = options;
+  els.displayCurrency.innerHTML = options;
+
   if (!(currentCurrency in currencyDecimals)) {
     currentCurrency = currencies[0]?.code ?? "JPY";
   }
   els.currency.value = currentCurrency;
   applyCurrency();
+
+  // Resolve the display currency (fetches a rate when it differs from base).
+  const wantedDisplay = displayCurrency in currencyInfo ? displayCurrency : baseCurrency;
+  await setDisplayCurrency(wantedDisplay);
 }
 
 // --- Event wiring -----------------------------------------------------------
 
 els.lang.addEventListener("change", () => setLanguage(els.lang.value));
 els.currency.addEventListener("change", () => setCurrency(els.currency.value));
+els.displayCurrency.addEventListener("change", () => void setDisplayCurrency(els.displayCurrency.value));
 els.month.addEventListener("change", refresh);
 els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
@@ -601,9 +702,10 @@ els.importInput.addEventListener("change", async (event) => {
 
 els.month.value = new Date().toISOString().slice(0, 7);
 els.lang.value = currentLang;
+setupAmountUnitSuffixes();
 applyStaticTranslations();
 toggleCategoryField();
-// Load currencies first so the selector + amount steps are ready, then refresh.
+// Load currencies first so the selectors + amount steps are ready, then refresh.
 loadCurrencies()
   .catch((err) => toastError(err))
   .finally(refresh);
