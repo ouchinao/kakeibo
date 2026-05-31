@@ -21,6 +21,10 @@ const els = {
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
   reflectionForm: document.getElementById("reflection-form"),
+  forecast: document.getElementById("forecast"),
+  recurringForm: document.getElementById("recurring-form"),
+  recurringList: document.getElementById("recurring-list"),
+  postRecurringBtn: document.getElementById("post-recurring-btn"),
   toast: document.getElementById("toast"),
 };
 
@@ -121,6 +125,42 @@ function renderPlan(plan) {
   }
 }
 
+function renderForecast(forecast) {
+  const netMood = forecast.onTrack ? "good" : "bad";
+  els.forecast.innerHTML = `
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px">
+      ${stat("Projected net", `${forecast.projectedNet.formatted} ${forecast.onTrack ? "✓" : ""}`, netMood)}
+      ${stat("Projected expense", forecast.projectedExpense.formatted)}
+      ${stat("Recurring remaining", forecast.recurringRemaining.formatted)}
+      ${stat("Expected income", forecast.expectedIncome.formatted)}
+    </div>
+    <p class="muted" style="margin: 12px 0 0; font-size: 0.85rem">
+      Projection = expected income − (actual expense + recurring not yet posted).
+    </p>`;
+}
+
+function renderRecurring(list) {
+  if (list.length === 0) {
+    els.recurringList.innerHTML = `<p class="muted">No recurring expenses yet.</p>`;
+    return;
+  }
+  els.recurringList.innerHTML = list
+    .map(
+      (r) => `
+        <div class="cat-row" style="display:flex; justify-content:space-between; align-items:center; gap:8px">
+          <div>
+            <strong>${escapeHtml(r.name)}</strong>
+            <span class="muted"> · ${CATEGORY_LABELS[r.category]} · day ${r.dayOfMonth}</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px">
+            <span>${r.amount.formatted}</span>
+            <button class="danger" data-recurring-id="${r.id}">Delete</button>
+          </div>
+        </div>`,
+    )
+    .join("");
+}
+
 function renderReflection(reflection, questions) {
   els.reflectionForm.innerHTML = REFLECTION_KEYS.map((key) => {
     const value = reflection?.answers?.[key] ?? "";
@@ -149,16 +189,20 @@ function escapeHtml(value) {
 async function refresh() {
   const month = currentMonth();
   try {
-    const [summary, transactions, plan, reflection] = await Promise.all([
+    const [summary, transactions, plan, reflection, forecast, recurring] = await Promise.all([
       api(`/api/summary?month=${month}`),
       api(`/api/transactions?month=${month}`),
       api(`/api/plans/${month}`).catch(() => null),
       api(`/api/reflections/${month}`).catch(() => null),
+      api(`/api/forecast?month=${month}`),
+      api(`/api/recurring`),
     ]);
     renderSummary(summary);
     renderTransactions(transactions);
     renderPlan(plan);
     renderReflection(reflection, reflection?.questions ?? DEFAULT_QUESTIONS);
+    renderForecast(forecast);
+    renderRecurring(recurring);
   } catch (err) {
     toast(err.message, true);
   }
@@ -239,6 +283,47 @@ els.reflectionForm.addEventListener("submit", async (event) => {
       body: JSON.stringify({ answers }),
     });
     toast("Reflection saved");
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+els.recurringForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    name: document.getElementById("rec-name").value,
+    amount: Number(document.getElementById("rec-amount").value),
+    category: document.getElementById("rec-category").value,
+    dayOfMonth: Number(document.getElementById("rec-day").value),
+  };
+  try {
+    await api("/api/recurring", { method: "POST", body: JSON.stringify(payload) });
+    els.recurringForm.reset();
+    document.getElementById("rec-day").value = "1";
+    toast("Recurring expense added");
+    refresh();
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+els.recurringList.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-recurring-id]");
+  if (!button) return;
+  try {
+    await api(`/api/recurring/${button.dataset.recurringId}`, { method: "DELETE" });
+    toast("Recurring expense deleted");
+    refresh();
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
+
+els.postRecurringBtn.addEventListener("click", async () => {
+  try {
+    const result = await api(`/api/recurring/post?month=${currentMonth()}`, { method: "POST" });
+    toast(`Posted ${result.posted} recurring expense(s)`);
+    refresh();
   } catch (err) {
     toast(err.message, true);
   }

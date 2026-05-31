@@ -51,6 +51,16 @@ export const saveReflectionSchema = z.object({
     .default({}),
 });
 
+export const createRecurringExpenseSchema = z.object({
+  name: z.string().trim().min(1).max(100),
+  amount: positiveAmount,
+  currency: currencyCode.optional(),
+  category: categoryEnum,
+  dayOfMonth: z.number().int().min(1).max(28),
+  active: z.boolean().optional(),
+});
+
 export type RecordTransactionInput = z.infer<typeof recordTransactionSchema>;
 export type SaveMonthlyPlanInput = z.infer<typeof saveMonthlyPlanSchema>;
 export type SaveReflectionInput = z.infer<typeof saveReflectionSchema>;
+export type CreateRecurringExpenseInput = z.infer<typeof createRecurringExpenseSchema>;

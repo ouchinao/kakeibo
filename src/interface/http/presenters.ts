@@ -1,6 +1,8 @@
 import { type Money } from "../../domain/money.ts";
+import { type MonthlyForecast } from "../../domain/monthly-forecast.ts";
 import { type MonthlyPlan } from "../../domain/monthly-plan.ts";
 import { type MonthlySummary } from "../../domain/monthly-summary.ts";
+import { type RecurringExpense } from "../../domain/recurring-expense.ts";
 import { REFLECTION_QUESTIONS, type Reflection } from "../../domain/reflection.ts";
 import { type Transaction } from "../../domain/transaction.ts";
 
@@ -75,6 +77,32 @@ export function summaryToDto(summary: MonthlySummary) {
       remaining: moneyToDto(breakdown.remaining),
       overBudget: breakdown.overBudget,
     })),
+  };
+}
+
+export function recurringExpenseToDto(recurring: RecurringExpense) {
+  return {
+    id: recurring.id,
+    name: recurring.name,
+    amount: moneyToDto(recurring.amount),
+    category: recurring.category,
+    dayOfMonth: recurring.dayOfMonth,
+    active: recurring.active,
+  };
+}
+
+export function forecastToDto(forecast: MonthlyForecast) {
+  return {
+    month: forecast.month.toString(),
+    currency: forecast.currency,
+    expectedIncome: moneyToDto(forecast.expectedIncome),
+    actualIncome: moneyToDto(forecast.actualIncome),
+    actualExpense: moneyToDto(forecast.actualExpense),
+    recurringRemaining: moneyToDto(forecast.recurringRemaining),
+    projectedExpense: moneyToDto(forecast.projectedExpense),
+    projectedNet: moneyToDto(forecast.projectedNet),
+    savingsGoal: moneyToDto(forecast.savingsGoal),
+    onTrack: forecast.onTrack,
   };
 }
 
