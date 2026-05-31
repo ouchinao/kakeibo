@@ -8,7 +8,7 @@ import {
   trendChartAriaLabel,
 } from "./a11y-labels.js";
 import { amountStep } from "./currency-format.js";
-import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
+import { errorMessage, resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
@@ -62,7 +62,13 @@ const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
 
-/** Thin fetch wrapper that surfaces API error envelopes as thrown errors. */
+/**
+ * Thin fetch wrapper that surfaces API error envelopes as thrown errors.
+ *
+ * The thrown Error carries the server-provided `code` (when present) so the
+ * presentation layer can localise the message. The `message` keeps the raw
+ * English server text as a fallback for codes we do not translate.
+ */
 async function api(path, options = {}) {
   const res = await fetch(path, {
     headers: { "content-type": "application/json" },
@@ -71,9 +77,16 @@ async function api(path, options = {}) {
   if (res.status === 204) return null;
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    const err = new Error(body?.error?.message ?? `Request failed (${res.status})`);
+    err.code = body?.error?.code;
+    throw err;
   }
   return body;
+}
+
+/** Shows a localised toast for a thrown API error (or any Error). */
+function toastError(err) {
+  toast(errorMessage(currentLang, err?.code, err?.message), true);
 }
 
 function toast(message, isError = false) {
@@ -297,7 +310,7 @@ async function refresh() {
     renderRecurring(recurring);
     renderTrend(trend);
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 }
 
@@ -416,7 +429,7 @@ els.txForm.addEventListener("submit", async (event) => {
     toast(t("toast.txAdded"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -428,7 +441,7 @@ els.txList.addEventListener("click", async (event) => {
     toast(t("toast.txDeleted"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -452,7 +465,7 @@ els.planForm.addEventListener("submit", async (event) => {
     toast(t("toast.planSaved"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -469,7 +482,7 @@ els.reflectionForm.addEventListener("submit", async (event) => {
     });
     toast(t("toast.reflectionSaved"));
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -491,7 +504,7 @@ els.recurringForm.addEventListener("submit", async (event) => {
     toast(t("toast.recurringAdded"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -503,7 +516,7 @@ els.recurringList.addEventListener("click", async (event) => {
     toast(t("toast.recurringDeleted"));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -513,7 +526,7 @@ els.postRecurringBtn.addEventListener("click", async () => {
     toast(t("toast.recurringPosted", { n: result.posted }));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   }
 });
 
@@ -535,11 +548,15 @@ els.importInput.addEventListener("change", async (event) => {
       body: csv,
     });
     const body = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(body?.error?.message ?? `Import failed (${res.status})`);
+    if (!res.ok) {
+      const err = new Error(body?.error?.message ?? `Import failed (${res.status})`);
+      err.code = body?.error?.code;
+      throw err;
+    }
     toast(t("toast.imported", { n: body.imported }));
     refresh();
   } catch (err) {
-    toast(err.message, true);
+    toastError(err);
   } finally {
     els.importInput.value = "";
   }
@@ -553,5 +570,5 @@ applyStaticTranslations();
 toggleCategoryField();
 // Load currencies first so the selector + amount steps are ready, then refresh.
 loadCurrencies()
-  .catch((err) => toast(err.message, true))
+  .catch((err) => toastError(err))
   .finally(refresh);
