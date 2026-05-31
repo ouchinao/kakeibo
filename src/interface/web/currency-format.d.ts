@@ -13,6 +13,13 @@ export function convertToBaseMinor(
   baseMinorUnits: number,
 ): number | null;
 
+export function convertMinor(
+  fromMinor: number,
+  fromMinorUnits: number,
+  rate: number,
+  toMinorUnits: number,
+): number | null;
+
 export function formatMoney(minor: number, currency: BaseCurrency): string;
 
 export function ratePlausible(rate: number): boolean;

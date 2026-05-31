@@ -25,6 +25,19 @@ export function convertToBaseMinor(amountMajor, rate, baseMinorUnits) {
 }
 
 /**
+ * Converts an amount held in one currency's minor units into another currency's
+ * minor units using a `from -> to` rate. Used for the read-only display of
+ * monthly totals in a chosen display currency (stored data stays in the base
+ * currency). Preserves sign so negative totals (e.g. a negative net) convert
+ * correctly. Returns `null` for a non-finite amount or non-positive rate.
+ */
+export function convertMinor(fromMinor, fromMinorUnits, rate, toMinorUnits) {
+  if (!Number.isFinite(fromMinor) || !Number.isFinite(rate) || rate <= 0) return null;
+  const fromMajor = fromMinor / 10 ** fromMinorUnits;
+  return Math.round(fromMajor * rate * 10 ** toMinorUnits);
+}
+
+/**
  * Formats an amount given in minor units using a currency's symbol and
  * precision, mirroring the server-side Money.format() output (e.g. "¥1,851",
  * "$12.35") so the preview matches the rest of the UI.
