@@ -112,8 +112,14 @@ Amounts in requests are in human-friendly **major units** (e.g. `1200` for
 | `GET`    | `/api/plans/:month`               | Get the plan for a month          |
 | `PUT`    | `/api/plans/:month`               | Create/update the plan for a month |
 | `GET`    | `/api/summary?month=YYYY-MM`      | Get the monthly summary read model |
+| `GET`    | `/api/rate?from=USD[&to=JPY]`     | Latest FX rate to the base currency (auto, manual fallback) |
 | `GET`    | `/api/reflections/:month`         | Get a month's reflection          |
 | `PUT`    | `/api/reflections/:month`         | Create/update a month's reflection |
+
+Automatic exchange rates come from [Frankfurter](https://frankfurter.dev), a
+free, key-less, ECB-backed API — no credentials are stored or sent. When a rate
+is unavailable (an unsupported currency, or the network is blocked), the rate is
+entered manually instead.
 
 ### Examples
 

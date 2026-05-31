@@ -63,8 +63,9 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
   // `currency` is the base currency; transactions carry their amount converted
   // to it (baseAmount), so mixed-currency months aggregate correctly. A tx
   // whose baseAmount is in another currency (legacy data) is skipped rather
-  // than crashing. A plan only applies when it is denominated in this currency.
-  const effectivePlan = plan !== null && plan.currency === currency ? plan : null;
+  // than crashing. A plan applies via its base-currency fields, so a plan in
+  // any currency is honoured once converted.
+  const effectivePlan = plan !== null && plan.baseCurrency === currency ? plan : null;
 
   let totalIncome = zero;
   let totalExpense = zero;
@@ -84,7 +85,7 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
   }
 
   const categories: CategoryBreakdown[] = ALL_CATEGORIES.map((category) => {
-    const budget = effectivePlan?.budgetFor(category) ?? zero;
+    const budget = effectivePlan?.baseBudgetFor(category) ?? zero;
     const spent = spentByCategory.get(category) ?? zero;
     const remaining = budget.subtract(spent);
     return {
@@ -97,9 +98,9 @@ export function buildMonthlySummary(input: MonthlySummaryInput): MonthlySummary 
     };
   });
 
-  const plannedIncome = effectivePlan?.plannedIncome ?? zero;
-  const savingsGoal = effectivePlan?.savingsGoal ?? zero;
-  const availableToSpend = effectivePlan?.availableToSpend() ?? zero;
+  const plannedIncome = effectivePlan?.basePlannedIncome ?? zero;
+  const savingsGoal = effectivePlan?.baseSavingsGoal ?? zero;
+  const availableToSpend = effectivePlan?.baseAvailableToSpend() ?? zero;
   const actualSavings = totalIncome.subtract(totalExpense);
 
   return {

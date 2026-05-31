@@ -12,6 +12,15 @@ export interface MonthlyPlanProps {
   readonly savingsGoal: Money;
   /** Optional spending ceiling per kakeibo category. */
   readonly categoryBudgets: ReadonlyMap<KakeiboCategory, Money>;
+  /**
+   * The plan's monetary fields converted to the app's base currency at save
+   * time. Each defaults to its own-currency counterpart (the plan is already in
+   * the base currency / rate 1). Aggregations use these so a plan denominated in
+   * any currency still applies to the base-currency summary.
+   */
+  readonly basePlannedIncome?: Money | undefined;
+  readonly baseSavingsGoal?: Money | undefined;
+  readonly baseCategoryBudgets?: ReadonlyMap<KakeiboCategory, Money> | undefined;
 }
 
 /**
@@ -22,7 +31,8 @@ export interface MonthlyPlanProps {
  * that, and exposes `availableToSpend()` as the derived budget envelope.
  *
  * Invariants:
- *  - every monetary field must share the plan's currency;
+ *  - every monetary field must share the plan's currency (and, separately, the
+ *    base-currency fields must share the base currency);
  *  - savings goal cannot exceed planned income (you cannot save more than you
  *    plan to earn).
  */
@@ -32,36 +42,38 @@ export class MonthlyPlan {
   readonly plannedIncome: Money;
   readonly savingsGoal: Money;
   readonly categoryBudgets: ReadonlyMap<KakeiboCategory, Money>;
+  /** Base-currency view of the plan's fields (defaults to the own-currency ones). */
+  readonly basePlannedIncome: Money;
+  readonly baseSavingsGoal: Money;
+  readonly baseCategoryBudgets: ReadonlyMap<KakeiboCategory, Money>;
 
   constructor(props: MonthlyPlanProps) {
-    const currency = props.plannedIncome.currency;
+    assertConsistent(props.plannedIncome, props.savingsGoal, props.categoryBudgets);
 
-    assertSameCurrency(currency, props.savingsGoal);
-    for (const budget of props.categoryBudgets.values()) {
-      assertSameCurrency(currency, budget);
-    }
-
-    if (props.savingsGoal.isNegative()) {
-      throw new BusinessRuleError("Savings goal cannot be negative");
-    }
-    if (props.plannedIncome.isNegative()) {
-      throw new BusinessRuleError("Planned income cannot be negative");
-    }
-    if (props.savingsGoal.compareTo(props.plannedIncome) > 0) {
-      throw new BusinessRuleError("Savings goal cannot exceed planned income");
-    }
+    const basePlannedIncome = props.basePlannedIncome ?? props.plannedIncome;
+    const baseSavingsGoal = props.baseSavingsGoal ?? props.savingsGoal;
+    const baseCategoryBudgets = props.baseCategoryBudgets ?? props.categoryBudgets;
+    assertConsistent(basePlannedIncome, baseSavingsGoal, baseCategoryBudgets);
 
     this.id = props.id;
     this.month = props.month;
     this.plannedIncome = props.plannedIncome;
     this.savingsGoal = props.savingsGoal;
     this.categoryBudgets = new Map(props.categoryBudgets);
+    this.basePlannedIncome = basePlannedIncome;
+    this.baseSavingsGoal = baseSavingsGoal;
+    this.baseCategoryBudgets = new Map(baseCategoryBudgets);
     Object.freeze(this);
   }
 
   /** The plan's working currency (derived from planned income). */
   get currency(): string {
     return this.plannedIncome.currency;
+  }
+
+  /** The app base currency this plan aggregates into (derived from base income). */
+  get baseCurrency(): string {
+    return this.basePlannedIncome.currency;
   }
 
   /**
@@ -84,6 +96,42 @@ export class MonthlyPlan {
       total = total.add(this.budgetFor(category));
     }
     return total;
+  }
+
+  /** {@link availableToSpend} expressed in the base currency. */
+  baseAvailableToSpend(): Money {
+    return this.basePlannedIncome.subtract(this.baseSavingsGoal);
+  }
+
+  /** {@link budgetFor} expressed in the base currency. */
+  baseBudgetFor(category: KakeiboCategory): Money {
+    return this.baseCategoryBudgets.get(category) ?? Money.zero(this.baseCurrency);
+  }
+}
+
+/**
+ * Validates that a (income, savings, budgets) triple shares one currency and
+ * satisfies the plan's business rules. Applied to both the own-currency and the
+ * base-currency views.
+ */
+function assertConsistent(
+  plannedIncome: Money,
+  savingsGoal: Money,
+  categoryBudgets: ReadonlyMap<KakeiboCategory, Money>,
+): void {
+  const currency = plannedIncome.currency;
+  assertSameCurrency(currency, savingsGoal);
+  for (const budget of categoryBudgets.values()) {
+    assertSameCurrency(currency, budget);
+  }
+  if (savingsGoal.isNegative()) {
+    throw new BusinessRuleError("Savings goal cannot be negative");
+  }
+  if (plannedIncome.isNegative()) {
+    throw new BusinessRuleError("Planned income cannot be negative");
+  }
+  if (savingsGoal.compareTo(plannedIncome) > 0) {
+    throw new BusinessRuleError("Savings goal cannot exceed planned income");
   }
 }
 

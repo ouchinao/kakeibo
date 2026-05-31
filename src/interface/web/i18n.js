@@ -14,6 +14,8 @@ export const translations = {
     "label.currency": "Currency",
     "label.trendRange": "Trend range",
     "label.rate": "Rate to base currency",
+    "hint.rateAuto": "Auto rate ({source}, {date}) — editable",
+    "hint.rateManual": "No automatic rate; enter it manually",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -120,6 +122,8 @@ export const translations = {
     "label.currency": "通貨",
     "label.trendRange": "推移の期間",
     "label.rate": "基軸通貨へのレート",
+    "hint.rateAuto": "自動レート（{source}、{date}）— 編集できます",
+    "hint.rateManual": "自動レートなし。手動で入力してください",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",

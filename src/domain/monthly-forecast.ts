@@ -65,20 +65,20 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
 
   let recurringRemaining = zero;
   for (const recurring of recurringExpenses) {
-    // Recurring expenses don't yet store a base-currency amount, so only those
-    // already denominated in the base currency are projected (others skipped).
+    // Project each recurring expense via its base-currency equivalent, so
+    // foreign-currency expenses are included at their booking-time rate.
     if (
       recurring.active &&
       !isPosted(recurring.id) &&
-      recurring.amount.currency === currency
+      recurring.baseAmount.currency === currency
     ) {
-      recurringRemaining = recurringRemaining.add(recurring.amount);
+      recurringRemaining = recurringRemaining.add(recurring.baseAmount);
     }
   }
 
-  const effectivePlan = plan !== null && plan.currency === currency ? plan : null;
-  const expectedIncome = effectivePlan?.plannedIncome ?? actualIncome;
-  const savingsGoal = effectivePlan?.savingsGoal ?? zero;
+  const effectivePlan = plan !== null && plan.baseCurrency === currency ? plan : null;
+  const expectedIncome = effectivePlan?.basePlannedIncome ?? actualIncome;
+  const savingsGoal = effectivePlan?.baseSavingsGoal ?? zero;
   const projectedExpense = actualExpense.add(recurringRemaining);
   const projectedNet = expectedIncome.subtract(projectedExpense);
 
