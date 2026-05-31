@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { KakeiboCategory } from "../../src/domain/category.ts";
 import { BusinessRuleError } from "../../src/domain/errors.ts";
 import { TransactionType } from "../../src/domain/transaction.ts";
-import { NotFoundError } from "../../src/application/errors.ts";
+import { ApplicationError, NotFoundError } from "../../src/application/errors.ts";
 import { DeleteTransaction } from "../../src/application/use-cases/delete-transaction.ts";
 import { ListTransactions } from "../../src/application/use-cases/list-transactions.ts";
 import { RecordTransaction } from "../../src/application/use-cases/record-transaction.ts";
@@ -57,6 +57,30 @@ describe("transaction use cases", () => {
         // missing category for an expense
       }),
     ).rejects.toThrow(BusinessRuleError);
+  });
+
+  test("requires an explicit rate for a foreign-currency transaction", async () => {
+    await expect(
+      record.execute({
+        type: TransactionType.EXPENSE,
+        amountMinor: 1234,
+        currency: "USD", // base is JPY; no rate supplied
+        category: KakeiboCategory.WANTS,
+      }),
+    ).rejects.toThrow(ApplicationError);
+  });
+
+  test("converts a foreign-currency transaction using the supplied rate", async () => {
+    const tx = await record.execute({
+      type: TransactionType.EXPENSE,
+      amountMinor: 1234, // $12.34
+      currency: "USD",
+      category: KakeiboCategory.WANTS,
+      rate: 150, // USD -> JPY
+    });
+    expect(tx.amount.currency).toBe("USD");
+    expect(tx.baseAmount.currency).toBe("JPY");
+    expect(tx.baseAmount.amount).toBe(1851); // round(12.34 * 150)
   });
 
   test("lists only the requested month, newest first", async () => {
