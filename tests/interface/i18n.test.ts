@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   DEFAULT_LANGUAGE,
+  errorMessage,
   resolveLanguage,
   SUPPORTED_LANGUAGES,
   translate,
@@ -49,6 +50,44 @@ describe("resolveLanguage", () => {
   test("handles non-string input", () => {
     // @ts-expect-error intentionally passing a non-string
     expect(resolveLanguage(undefined)).toBe(DEFAULT_LANGUAGE);
+  });
+});
+
+describe("errorMessage", () => {
+  test("localises a mapped error code in the active language", () => {
+    expect(errorMessage("en", "VALIDATION_ERROR", "Validation failed")).toBe(
+      "The information you entered is not valid.",
+    );
+    expect(errorMessage("ja", "VALIDATION_ERROR", "Validation failed")).toBe(
+      "入力された内容が正しくありません。",
+    );
+  });
+
+  test("localises a domain error code (e.g. BusinessRuleError)", () => {
+    expect(errorMessage("ja", "BusinessRuleError", "some english detail")).not.toBe(
+      "some english detail",
+    );
+    expect(errorMessage("ja", "BusinessRuleError", "some english detail").length).toBeGreaterThan(0);
+  });
+
+  test("falls back to the server-provided message for an unmapped code", () => {
+    expect(errorMessage("en", "SOME_UNKNOWN_CODE", "Raw server message")).toBe(
+      "Raw server message",
+    );
+    expect(errorMessage("ja", "SOME_UNKNOWN_CODE", "Raw server message")).toBe(
+      "Raw server message",
+    );
+  });
+
+  test("falls back to a generic message when both code and fallback are missing", () => {
+    expect(errorMessage("en", undefined, undefined).length).toBeGreaterThan(0);
+    expect(errorMessage("en", "", "").length).toBeGreaterThan(0);
+    expect(errorMessage("ja", null, null).length).toBeGreaterThan(0);
+  });
+
+  test("never returns the raw i18n key", () => {
+    // An unmapped code with no fallback must not leak the internal key form.
+    expect(errorMessage("en", "NOPE", undefined)).not.toBe("error.NOPE");
   });
 });
 
