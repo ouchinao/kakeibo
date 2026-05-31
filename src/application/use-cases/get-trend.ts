@@ -1,22 +1,11 @@
-import { type Money } from "../../domain/money.ts";
 import { buildMonthlySummary } from "../../domain/monthly-summary.ts";
+import { type TrendPoint } from "../../domain/trend-point.ts";
 import { YearMonth } from "../../domain/year-month.ts";
 import { ApplicationError } from "../errors.ts";
 import {
   type MonthlyPlanRepository,
   type TransactionRepository,
 } from "../ports/repositories.ts";
-
-/** Key figures for a single month in a trend series. */
-export interface TrendPoint {
-  readonly month: YearMonth;
-  readonly totalIncome: Money;
-  readonly totalExpense: Money;
-  /** totalIncome − totalExpense for the month. */
-  readonly actualSavings: Money;
-  readonly savingsGoal: Money;
-  readonly savingsGoalMet: boolean;
-}
 
 const MAX_MONTHS = 24;
 
