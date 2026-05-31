@@ -6,10 +6,12 @@ import { type GetMonthlyPlan } from "../../application/use-cases/get-monthly-pla
 import { type GetMonthlySummary } from "../../application/use-cases/get-monthly-summary.ts";
 import { type GetReflection } from "../../application/use-cases/get-reflection.ts";
 import { type GetTrend } from "../../application/use-cases/get-trend.ts";
+import { type ImportTransactions } from "../../application/use-cases/import-transactions.ts";
 import { type ListTransactions } from "../../application/use-cases/list-transactions.ts";
 import { type RecordTransaction } from "../../application/use-cases/record-transaction.ts";
 import { type SaveMonthlyPlan } from "../../application/use-cases/save-monthly-plan.ts";
 import { type SaveReflection } from "../../application/use-cases/save-reflection.ts";
+import { csvToImportRecords, transactionsToCsv } from "./transaction-csv.ts";
 import { json, toErrorResponse } from "./json.ts";
 import {
   planToDto,
@@ -35,6 +37,7 @@ export interface RouterDeps {
   saveReflection: SaveReflection;
   getReflection: GetReflection;
   getTrend: GetTrend;
+  importTransactions: ImportTransactions;
   defaultCurrency: string;
   /** Optional static-asset handler for the web UI (returns null to fall through). */
   serveStatic?: (pathname: string) => Promise<Response | null>;
@@ -119,6 +122,30 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const txs = await deps.listTransactions.execute(requireMonth(ctx));
         return json(txs.map(transactionToDto));
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/transactions/export",
+      handler: async (_req, ctx) => {
+        const month = requireMonth(ctx);
+        const txs = await deps.listTransactions.execute(month);
+        return new Response(transactionsToCsv(txs), {
+          headers: {
+            "content-type": "text/csv; charset=utf-8",
+            "content-disposition": `attachment; filename="kakeibo-${month}.csv"`,
+          },
+        });
+      },
+    },
+    {
+      method: "POST",
+      pattern: "/api/transactions/import",
+      handler: async (req) => {
+        const csv = await req.text();
+        const records = csvToImportRecords(csv, deps.defaultCurrency);
+        const result = await deps.importTransactions.execute(records);
+        return json({ imported: result.imported }, 201);
       },
     },
     {

@@ -7,6 +7,7 @@ import { GetMonthlyPlan } from "./application/use-cases/get-monthly-plan.ts";
 import { GetMonthlySummary } from "./application/use-cases/get-monthly-summary.ts";
 import { GetReflection } from "./application/use-cases/get-reflection.ts";
 import { GetTrend } from "./application/use-cases/get-trend.ts";
+import { ImportTransactions } from "./application/use-cases/import-transactions.ts";
 import { ListTransactions } from "./application/use-cases/list-transactions.ts";
 import { RecordTransaction } from "./application/use-cases/record-transaction.ts";
 import { SaveMonthlyPlan } from "./application/use-cases/save-monthly-plan.ts";
@@ -64,6 +65,7 @@ export function createApp(config: AppConfig): App {
     saveReflection: new SaveReflection(reflections, ids),
     getReflection: new GetReflection(reflections),
     getTrend: new GetTrend(transactions, plans, config.defaultCurrency),
+    importTransactions: new ImportTransactions(transactions, ids, clock),
     defaultCurrency: config.defaultCurrency,
     serveStatic: createStaticHandler(WEB_ROOT),
   });
