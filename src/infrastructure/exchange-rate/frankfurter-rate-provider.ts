@@ -13,9 +13,11 @@ interface FrankfurterLatest {
 }
 
 /**
- * Fetches rates from Frankfurter (https://frankfurter.dev) — a free, key-less,
- * ECB-backed FX API. No credentials are required, so nothing sensitive is
- * stored or sent.
+ * Fetches rates from Frankfurter (https://www.frankfurter.app) — a free,
+ * key-less, ECB-backed FX API. No credentials are required, so nothing
+ * sensitive is stored or sent. (The host must be reachable: in a locked-down
+ * network policy, add `api.frankfurter.app` to the allowlist — otherwise the
+ * call fails and the app falls back to a manually entered rate.)
  *
  * Per the {@link ExchangeRateProvider} contract this never throws: any failure
  * (HTTP error, malformed body, blocked network, or a currency outside the ECB
@@ -28,11 +30,11 @@ interface FrankfurterLatest {
 export class FrankfurterRateProvider implements ExchangeRateProvider {
   constructor(
     private readonly fetchFn: FetchFn = fetch,
-    private readonly baseUrl = "https://api.frankfurter.dev/v1",
+    private readonly baseUrl = "https://api.frankfurter.app",
   ) {}
 
   async getLatestRate(from: string, to: string): Promise<ExchangeRateQuote | null> {
-    const url = `${this.baseUrl}/latest?base=${encodeURIComponent(from)}&symbols=${encodeURIComponent(to)}`;
+    const url = `${this.baseUrl}/latest?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     try {
       const response = await this.fetchFn(url);
       if (!response.ok) return null;
