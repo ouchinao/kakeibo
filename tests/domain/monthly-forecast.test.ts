@@ -97,6 +97,28 @@ describe("buildMonthlyForecast", () => {
     expect(forecast.onTrack).toBe(false); // below 50,000 goal
   });
 
+  test("ignores recurring expenses in a different currency (single-currency forecast)", () => {
+    const usdSubscription = new RecurringExpense({
+      id: "usd-sub",
+      name: "USD subscription",
+      amount: Money.ofMinor(1000, "USD"),
+      category: KakeiboCategory.WANTS,
+      dayOfMonth: 1,
+      active: true,
+    });
+    const forecast = buildMonthlyForecast({
+      month,
+      currency: "JPY",
+      plan,
+      transactions: [],
+      recurringExpenses: [recurring("rent", 85000), usdSubscription],
+      isPosted: () => false,
+    });
+    // The USD recurring expense is excluded rather than crashing the forecast.
+    expect(forecast.recurringRemaining.amount).toBe(85000);
+    expect(forecast.currency).toBe("JPY");
+  });
+
   test("falls back to actual income when there is no plan", () => {
     const income = new Transaction({
       id: "inc",
