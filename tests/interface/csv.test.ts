@@ -41,4 +41,9 @@ describe("CSV utilities", () => {
   test("throws on an unterminated quote", () => {
     expect(() => parseCsv('"unterminated')).toThrow();
   });
+
+  test("throws on text following a closing quote (RFC 4180 violation)", () => {
+    expect(() => parseCsv('"abc"def')).toThrow();
+    expect(() => parseCsv('"a","b"x')).toThrow();
+  });
 });

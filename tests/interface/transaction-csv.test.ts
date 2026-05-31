@@ -68,4 +68,14 @@ describe("csvToImportRecords", () => {
     const csv = "date,type,category,amount\n2026-05-01,EXPENSE,NEEDS,abc";
     expect(() => csvToImportRecords(csv, "JPY")).toThrow(CsvImportError);
   });
+
+  test("throws with the row number on an empty amount", () => {
+    const csv = "date,type,category,amount\n2026-05-01,EXPENSE,NEEDS,";
+    expect(() => csvToImportRecords(csv, "JPY")).toThrow(/Row 2/);
+  });
+
+  test.each(["0", "-100"])("rejects a non-positive amount %p at the CSV layer", (amount) => {
+    const csv = `date,type,category,amount\n2026-05-01,EXPENSE,NEEDS,${amount}`;
+    expect(() => csvToImportRecords(csv, "JPY")).toThrow(/Row 2/);
+  });
 });
