@@ -226,8 +226,8 @@
         <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
           <h2 style="margin: 0" data-i18n="heading.transactions">Transactions</h2>
           <div style="display: flex; gap: 8px">
-            <button type="button" id="export-btn" class="ghost" data-i18n="button.exportCsv">⬇ Export CSV</button>
-            <button type="button" id="import-btn" class="ghost" data-i18n="button.importCsv">⬆ Import CSV</button>
+            <button type="button" id="export-btn" class="ghost"><span aria-hidden="true">⬇ </span><span data-i18n="button.exportCsv">Export CSV</span></button>
+            <button type="button" id="import-btn" class="ghost"><span aria-hidden="true">⬆ </span><span data-i18n="button.importCsv">Import CSV</span></button>
             <input type="file" id="import-input" accept=".csv,text/csv" data-i18n-aria-label="button.importCsv" aria-label="Import CSV" hidden />
           </div>
         </div>
