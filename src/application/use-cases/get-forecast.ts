@@ -23,7 +23,7 @@ export class GetForecast {
     private readonly defaultCurrency: string,
   ) {}
 
-  async execute(month: string | YearMonth): Promise<MonthlyForecast> {
+  async execute(month: string | YearMonth, currency?: string): Promise<MonthlyForecast> {
     const yearMonth = typeof month === "string" ? YearMonth.parse(month) : month;
 
     const [transactions, plan, recurringExpenses, postedIds] = await Promise.all([
@@ -35,7 +35,7 @@ export class GetForecast {
 
     return buildMonthlyForecast({
       month: yearMonth,
-      currency: plan?.currency ?? this.defaultCurrency,
+      currency: plan?.currency ?? currency ?? this.defaultCurrency,
       plan,
       transactions,
       recurringExpenses,

@@ -1,4 +1,5 @@
 import { type KakeiboCategory } from "../../domain/category.ts";
+import { listCurrencies } from "../../domain/currency.ts";
 import { Money } from "../../domain/money.ts";
 import { ApplicationError } from "../../application/errors.ts";
 import { type CreateRecurringExpense } from "../../application/use-cases/create-recurring-expense.ts";
@@ -19,6 +20,7 @@ import { type SaveReflection } from "../../application/use-cases/save-reflection
 import { csvToImportRecords, transactionsToCsv } from "./transaction-csv.ts";
 import { json, toErrorResponse } from "./json.ts";
 import {
+  currencyToDto,
   forecastToDto,
   planToDto,
   recurringExpenseToDto,
@@ -105,6 +107,8 @@ function buildRoutes(deps: RouterDeps): Route[] {
     if (!month) throw new RouteError("Missing required 'month' parameter");
     return month;
   };
+  const optionalCurrency = (ctx: RouteContext): string | undefined =>
+    ctx.url.searchParams.get("currency") ?? undefined;
 
   return [
     {
@@ -171,9 +175,14 @@ function buildRoutes(deps: RouterDeps): Route[] {
     },
     {
       method: "GET",
+      pattern: "/api/currencies",
+      handler: async () => json(listCurrencies().map(currencyToDto)),
+    },
+    {
+      method: "GET",
       pattern: "/api/summary",
       handler: async (_req, ctx) => {
-        const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
+        const summary = await deps.getMonthlySummary.execute(requireMonth(ctx), optionalCurrency(ctx));
         return json(summaryToDto(summary));
       },
     },
@@ -183,7 +192,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const monthsParam = ctx.url.searchParams.get("months");
         const months = monthsParam === null ? 6 : Number(monthsParam);
-        const points = await deps.getTrend.execute(requireMonth(ctx), months);
+        const points = await deps.getTrend.execute(requireMonth(ctx), months, optionalCurrency(ctx));
         return json(trendToDto(points));
       },
     },
@@ -222,7 +231,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
       method: "GET",
       pattern: "/api/forecast",
       handler: async (_req, ctx) => {
-        const forecast = await deps.getForecast.execute(requireMonth(ctx));
+        const forecast = await deps.getForecast.execute(requireMonth(ctx), optionalCurrency(ctx));
         return json(forecastToDto(forecast));
       },
     },

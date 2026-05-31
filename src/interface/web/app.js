@@ -7,14 +7,17 @@ import {
   deleteTransactionAriaLabel,
   trendChartAriaLabel,
 } from "./a11y-labels.js";
+import { amountStep } from "./currency-format.js";
 import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
 const LANGUAGE_STORAGE_KEY = "kakeibo-lang";
+const CURRENCY_STORAGE_KEY = "kakeibo-currency";
 
 const els = {
   lang: document.getElementById("lang"),
+  currency: document.getElementById("currency"),
   month: document.getElementById("month"),
   stats: document.getElementById("stats"),
   categories: document.getElementById("categories"),
@@ -39,6 +42,10 @@ const els = {
 let currentLang = resolveLanguage(
   localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? navigator.language ?? "en",
 );
+
+// code -> minorUnits, loaded from /api/currencies (server is the source of truth).
+let currencyDecimals = {};
+let currentCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) ?? "JPY";
 
 /** Translate a key in the active language. */
 const t = (key, vars) => translate(currentLang, key, vars);
@@ -262,15 +269,16 @@ function applyStaticTranslations() {
 async function refresh() {
   const month = currentMonth();
   try {
+    const cur = `&currency=${encodeURIComponent(currentCurrency)}`;
     const [summary, transactions, plan, reflection, forecast, recurring, trend] =
       await Promise.all([
-        api(`/api/summary?month=${month}`),
+        api(`/api/summary?month=${month}${cur}`),
         api(`/api/transactions?month=${month}`),
         api(`/api/plans/${month}`).catch(() => null),
         api(`/api/reflections/${month}`).catch(() => null),
-        api(`/api/forecast?month=${month}`),
+        api(`/api/forecast?month=${month}${cur}`),
         api(`/api/recurring`),
-        api(`/api/trend?month=${month}&months=${els.trendRange.value}`),
+        api(`/api/trend?month=${month}&months=${els.trendRange.value}${cur}`),
       ]);
     renderSummary(summary);
     renderTransactions(transactions);
@@ -296,9 +304,41 @@ function setLanguage(lang) {
   refresh();
 }
 
+/** Sets the amount inputs' step to match the active currency's precision. */
+function applyAmountStep() {
+  const step = amountStep(currencyDecimals[currentCurrency] ?? 2);
+  for (const input of document.querySelectorAll(".amount-input")) {
+    input.step = step;
+  }
+}
+
+function setCurrency(code) {
+  if (!(code in currencyDecimals)) return;
+  currentCurrency = code;
+  localStorage.setItem(CURRENCY_STORAGE_KEY, code);
+  els.currency.value = code;
+  applyAmountStep();
+  refresh();
+}
+
+/** Loads supported currencies from the API and populates the selector. */
+async function loadCurrencies() {
+  const currencies = await api("/api/currencies");
+  currencyDecimals = Object.fromEntries(currencies.map((c) => [c.code, c.minorUnits]));
+  els.currency.innerHTML = currencies
+    .map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`)
+    .join("");
+  if (!(currentCurrency in currencyDecimals)) {
+    currentCurrency = currencies[0]?.code ?? "JPY";
+  }
+  els.currency.value = currentCurrency;
+  applyAmountStep();
+}
+
 // --- Event wiring -----------------------------------------------------------
 
 els.lang.addEventListener("change", () => setLanguage(els.lang.value));
+els.currency.addEventListener("change", () => setCurrency(els.currency.value));
 els.month.addEventListener("change", refresh);
 els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
@@ -309,6 +349,7 @@ els.txForm.addEventListener("submit", async (event) => {
   const payload = {
     type,
     amount: Number(document.getElementById("tx-amount").value),
+    currency: currentCurrency,
     note: document.getElementById("tx-note").value || undefined,
     occurredAt: new Date(`${currentMonth()}-15T12:00:00Z`).toISOString(),
   };
@@ -344,6 +385,7 @@ els.planForm.addEventListener("submit", async (event) => {
     if (raw !== "") categoryBudgets[key] = Number(raw);
   }
   const body = {
+    currency: currentCurrency,
     plannedIncome: Number(document.getElementById("plan-income").value),
     savingsGoal: Number(document.getElementById("plan-savings").value),
     categoryBudgets,
@@ -379,6 +421,7 @@ els.recurringForm.addEventListener("submit", async (event) => {
   const payload = {
     name: document.getElementById("rec-name").value,
     amount: Number(document.getElementById("rec-amount").value),
+    currency: currentCurrency,
     category: document.getElementById("rec-category").value,
     dayOfMonth: Number(document.getElementById("rec-day").value),
   };
@@ -449,4 +492,7 @@ els.month.value = new Date().toISOString().slice(0, 7);
 els.lang.value = currentLang;
 applyStaticTranslations();
 toggleCategoryField();
-refresh();
+// Load currencies first so the selector + amount steps are ready, then refresh.
+loadCurrencies()
+  .catch((err) => toast(err.message, true))
+  .finally(refresh);

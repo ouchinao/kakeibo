@@ -21,7 +21,11 @@ export class GetTrend {
     private readonly defaultCurrency: string,
   ) {}
 
-  async execute(endMonth: string | YearMonth, months: number): Promise<TrendPoint[]> {
+  async execute(
+    endMonth: string | YearMonth,
+    months: number,
+    currency?: string,
+  ): Promise<TrendPoint[]> {
     if (!Number.isInteger(months) || months < 1 || months > MAX_MONTHS) {
       throw new ApplicationError(`'months' must be an integer between 1 and ${MAX_MONTHS}`);
     }
@@ -41,7 +45,7 @@ export class GetTrend {
         ]);
         const summary = buildMonthlySummary({
           month,
-          currency: plan?.currency ?? this.defaultCurrency,
+          currency: plan?.currency ?? currency ?? this.defaultCurrency,
           transactions,
           plan,
         });
