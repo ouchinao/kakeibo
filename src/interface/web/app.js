@@ -2,16 +2,14 @@
 // Vanilla ES modules, no build step and no external dependencies, so the UI
 // works fully offline alongside the local API.
 
-const CATEGORY_LABELS = {
-  NEEDS: "Needs",
-  WANTS: "Wants",
-  CULTURE: "Culture",
-  UNEXPECTED: "Unexpected",
-};
+import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
+const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
 const REFLECTION_KEYS = ["howMuchAvailable", "howMuchSaved", "howMuchSpent", "howToImprove"];
+const LANGUAGE_STORAGE_KEY = "kakeibo-lang";
 
 const els = {
+  lang: document.getElementById("lang"),
   month: document.getElementById("month"),
   stats: document.getElementById("stats"),
   categories: document.getElementById("categories"),
@@ -23,6 +21,15 @@ const els = {
   reflectionForm: document.getElementById("reflection-form"),
   toast: document.getElementById("toast"),
 };
+
+let currentLang = resolveLanguage(
+  localStorage.getItem(LANGUAGE_STORAGE_KEY) ?? navigator.language ?? "en",
+);
+
+/** Translate a key in the active language. */
+const t = (key, vars) => translate(currentLang, key, vars);
+/** Localised label for a kakeibo category. */
+const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
 
@@ -56,13 +63,13 @@ function renderSummary(summary) {
   const savingsMood = summary.savingsGoalMet ? "good" : "bad";
   const remainingMood = summary.remainingToSpend.minor < 0 ? "bad" : "good";
   els.stats.innerHTML = [
-    stat("Available to spend", summary.availableToSpend.formatted),
-    stat("Remaining to spend", summary.remainingToSpend.formatted, remainingMood),
-    stat("Income", summary.totalIncome.formatted),
-    stat("Expense", summary.totalExpense.formatted),
-    stat("Actual savings", summary.actualSavings.formatted, savingsMood),
+    stat(t("stat.availableToSpend"), summary.availableToSpend.formatted),
+    stat(t("stat.remainingToSpend"), summary.remainingToSpend.formatted, remainingMood),
+    stat(t("stat.income"), summary.totalIncome.formatted),
+    stat(t("stat.expense"), summary.totalExpense.formatted),
+    stat(t("stat.actualSavings"), summary.actualSavings.formatted, savingsMood),
     stat(
-      "Savings goal",
+      t("stat.savingsGoal"),
       `${summary.savingsGoal.formatted} ${summary.savingsGoalMet ? "✓" : ""}`,
       savingsMood,
     ),
@@ -75,12 +82,12 @@ function renderSummary(summary) {
       const overClass = c.overBudget ? " over" : "";
       const budgetText =
         budget > 0
-          ? `${c.spent.formatted} / ${c.budget.formatted} (${pct}%)`
-          : `${c.spent.formatted} spent · no budget set`;
+          ? t("msg.budgetUsage", { spent: c.spent.formatted, budget: c.budget.formatted, pct })
+          : t("msg.noBudget", { spent: c.spent.formatted });
       return `
         <div class="cat-row">
           <div class="cat-head">
-            <strong>${CATEGORY_LABELS[c.category]}</strong>
+            <strong>${categoryLabel(c.category)}</strong>
             <span class="${c.overBudget ? "value bad" : "muted"}">${budgetText}</span>
           </div>
           <div class="bar${overClass}"><span style="width:${pct}%"></span></div>
@@ -91,22 +98,23 @@ function renderSummary(summary) {
 
 function renderTransactions(list) {
   if (list.length === 0) {
-    els.txList.innerHTML = `<tr><td colspan="6" class="muted">No transactions yet.</td></tr>`;
+    els.txList.innerHTML = `<tr><td colspan="6" class="muted">${t("msg.noTransactions")}</td></tr>`;
     return;
   }
   els.txList.innerHTML = list
     .map((tx) => {
       const date = tx.occurredAt.slice(0, 10);
-      const category = tx.category ? CATEGORY_LABELS[tx.category] : "—";
+      const category = tx.category ? categoryLabel(tx.category) : "—";
       const sign = tx.type === "INCOME" ? "+" : "−";
+      const typeLabel = tx.type === "INCOME" ? t("type.income") : t("type.expense");
       return `
         <tr>
           <td>${date}</td>
-          <td><span class="tag">${tx.type === "INCOME" ? "Income" : "Expense"}</span></td>
+          <td><span class="tag">${typeLabel}</span></td>
           <td>${category}</td>
           <td>${escapeHtml(tx.note)}</td>
           <td style="text-align:right">${sign}${tx.amount.formatted}</td>
-          <td style="text-align:right"><button class="danger" data-id="${tx.id}">Delete</button></td>
+          <td style="text-align:right"><button class="danger" data-id="${tx.id}">${t("button.delete")}</button></td>
         </tr>`;
     })
     .join("");
@@ -115,35 +123,39 @@ function renderTransactions(list) {
 function renderPlan(plan) {
   els.planForm.querySelector("#plan-income").value = plan ? plan.plannedIncome.major : "";
   els.planForm.querySelector("#plan-savings").value = plan ? plan.savingsGoal.major : "";
-  for (const key of Object.keys(CATEGORY_LABELS)) {
+  for (const key of CATEGORY_KEYS) {
     const input = els.planForm.querySelector(`#plan-${key}`);
     input.value = plan?.categoryBudgets?.[key] ? plan.categoryBudgets[key].major : "";
   }
 }
 
-function renderReflection(reflection, questions) {
+function renderReflection(reflection) {
   els.reflectionForm.innerHTML = REFLECTION_KEYS.map((key) => {
     const value = reflection?.answers?.[key] ?? "";
     return `
       <div>
-        <label>${questions[key]}</label>
+        <label>${t(`question.${key}`)}</label>
         <textarea data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
       </div>`;
   }).join("");
 }
-
-const DEFAULT_QUESTIONS = {
-  howMuchAvailable: "How much money did you have available?",
-  howMuchSaved: "How much money did you manage to save?",
-  howMuchSpent: "How much money did you actually spend?",
-  howToImprove: "How can you improve next month?",
-};
 
 function escapeHtml(value) {
   return String(value).replace(
     /[&<>"']/g,
     (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch],
   );
+}
+
+/** Applies translations to all static [data-i18n] elements in the document. */
+function applyStaticTranslations() {
+  document.documentElement.lang = currentLang;
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    el.textContent = t(el.dataset.i18n);
+  }
+  for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
+    el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+  }
 }
 
 async function refresh() {
@@ -158,7 +170,7 @@ async function refresh() {
     renderSummary(summary);
     renderTransactions(transactions);
     renderPlan(plan);
-    renderReflection(reflection, reflection?.questions ?? DEFAULT_QUESTIONS);
+    renderReflection(reflection);
   } catch (err) {
     toast(err.message, true);
   }
@@ -168,8 +180,17 @@ function toggleCategoryField() {
   els.txCategoryField.style.display = els.txType.value === "EXPENSE" ? "" : "none";
 }
 
+function setLanguage(lang) {
+  currentLang = SUPPORTED_LANGUAGES.includes(lang) ? lang : "en";
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
+  els.lang.value = currentLang;
+  applyStaticTranslations();
+  refresh();
+}
+
 // --- Event wiring -----------------------------------------------------------
 
+els.lang.addEventListener("change", () => setLanguage(els.lang.value));
 els.month.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
 
@@ -187,7 +208,7 @@ els.txForm.addEventListener("submit", async (event) => {
     await api("/api/transactions", { method: "POST", body: JSON.stringify(payload) });
     els.txForm.reset();
     toggleCategoryField();
-    toast("Transaction added");
+    toast(t("toast.txAdded"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -199,7 +220,7 @@ els.txList.addEventListener("click", async (event) => {
   if (!button) return;
   try {
     await api(`/api/transactions/${button.dataset.id}`, { method: "DELETE" });
-    toast("Transaction deleted");
+    toast(t("toast.txDeleted"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -209,7 +230,7 @@ els.txList.addEventListener("click", async (event) => {
 els.planForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const categoryBudgets = {};
-  for (const key of Object.keys(CATEGORY_LABELS)) {
+  for (const key of CATEGORY_KEYS) {
     const raw = els.planForm.querySelector(`#plan-${key}`).value;
     if (raw !== "") categoryBudgets[key] = Number(raw);
   }
@@ -220,7 +241,7 @@ els.planForm.addEventListener("submit", async (event) => {
   };
   try {
     await api(`/api/plans/${currentMonth()}`, { method: "PUT", body: JSON.stringify(body) });
-    toast("Plan saved");
+    toast(t("toast.planSaved"));
     refresh();
   } catch (err) {
     toast(err.message, true);
@@ -238,7 +259,7 @@ els.reflectionForm.addEventListener("submit", async (event) => {
       method: "PUT",
       body: JSON.stringify({ answers }),
     });
-    toast("Reflection saved");
+    toast(t("toast.reflectionSaved"));
   } catch (err) {
     toast(err.message, true);
   }
@@ -247,5 +268,7 @@ els.reflectionForm.addEventListener("submit", async (event) => {
 // --- Init -------------------------------------------------------------------
 
 els.month.value = new Date().toISOString().slice(0, 7);
+els.lang.value = currentLang;
+applyStaticTranslations();
 toggleCategoryField();
 refresh();
