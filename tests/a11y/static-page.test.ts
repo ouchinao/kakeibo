@@ -6,9 +6,10 @@ import { auditStaticPage } from "../support/a11y.ts";
  * issue. Accessibility fixes should REMOVE the matching entry here (which fails
  * until the underlying axe violation is gone), ratcheting the debt to zero.
  *
- *   empty-table-header  -> #19 (empty actions column header)
+ * The static markup is now axe-clean — keep this empty so any new violation
+ * fails the build.
  */
-const KNOWN_DEBT = new Set(["empty-table-header"]);
+const KNOWN_DEBT = new Set<string>([]);
 
 describe("static web UI accessibility (axe-core)", () => {
   test("introduces no axe violations outside the tracked debt", async () => {
