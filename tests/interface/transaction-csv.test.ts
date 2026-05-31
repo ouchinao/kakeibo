@@ -21,8 +21,25 @@ describe("transactionsToCsv", () => {
       }),
     ]);
     const lines = csv.split("\r\n");
-    expect(lines[0]).toBe("date,type,category,amount,currency,note");
-    expect(lines[1]).toBe("2026-05-10T00:00:00.000Z,EXPENSE,NEEDS,1500,JPY,Groceries");
+    expect(lines[0]).toBe("date,type,category,amount,currency,base_amount,base_currency,note");
+    expect(lines[1]).toBe("2026-05-10T00:00:00.000Z,EXPENSE,NEEDS,1500,JPY,1500,JPY,Groceries");
+  });
+
+  test("serialises the base-currency amount for a foreign-currency entry", () => {
+    const csv = transactionsToCsv([
+      new Transaction({
+        id: "t2",
+        type: TransactionType.EXPENSE,
+        amount: Money.ofMinor(1234, "USD"), // $12.34
+        baseAmount: Money.ofMinor(1851, "JPY"), // ¥1,851 at booking rate
+        category: KakeiboCategory.WANTS,
+        occurredAt: new Date("2026-05-10T00:00:00Z"),
+        note: "Coffee",
+      }),
+    ]);
+    expect(csv.split("\r\n")[1]).toBe(
+      "2026-05-10T00:00:00.000Z,EXPENSE,WANTS,12.34,USD,1851,JPY,Coffee",
+    );
   });
 });
 
@@ -44,8 +61,31 @@ describe("csvToImportRecords", () => {
   });
 
   test("converts major amounts using the currency precision", () => {
-    const csv = "date,type,category,amount,currency,note\n2026-05-01,EXPENSE,WANTS,12.34,USD,";
-    expect(csvToImportRecords(csv, "JPY")[0]?.amountMinor).toBe(1234);
+    const csv =
+      "date,type,category,amount,currency,base_amount,base_currency,note\n2026-05-01,EXPENSE,WANTS,12.34,USD,1851,JPY,";
+    const record = csvToImportRecords(csv, "JPY")[0];
+    expect(record?.amountMinor).toBe(1234);
+    expect(record?.baseAmountMinor).toBe(1851);
+    expect(record?.baseCurrency).toBe("JPY");
+  });
+
+  test("requires a base amount for a foreign-currency row", () => {
+    const csv =
+      "date,type,category,amount,currency,note\n2026-05-01,EXPENSE,WANTS,12.34,USD,Coffee";
+    expect(() => csvToImportRecords(csv, "JPY")).toThrow(/Row 2/);
+  });
+
+  test("rejects a foreign row whose base currency is not this ledger's base", () => {
+    const csv =
+      "date,type,category,amount,currency,base_amount,base_currency,note\n2026-05-01,EXPENSE,WANTS,12.34,USD,1851,EUR,";
+    expect(() => csvToImportRecords(csv, "JPY")).toThrow(/Row 2/);
+  });
+
+  test("base-currency rows need no base amount (it defaults to the amount)", () => {
+    const csv = "date,type,category,amount,currency,note\n2026-05-01,EXPENSE,NEEDS,1500,JPY,";
+    const record = csvToImportRecords(csv, "JPY")[0];
+    expect(record?.amountMinor).toBe(1500);
+    expect(record?.baseAmountMinor).toBeUndefined();
   });
 
   test("income rows carry no category", () => {
