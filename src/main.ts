@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { createApp } from "./composition.ts";
+import { loadServerConfig } from "./server-config.ts";
 
 /**
  * Process entry point.
@@ -9,24 +10,26 @@ import { createApp } from "./composition.ts";
  * via the composition root, and serves the HTTP API + web UI with Bun.
  */
 function main(): void {
-  const port = Number(process.env.PORT ?? 3000);
-  const databasePath = process.env.DATABASE_PATH ?? "./data/kakeibo.sqlite";
-  const defaultCurrency = process.env.DEFAULT_CURRENCY ?? "JPY";
+  const config = loadServerConfig(process.env);
 
   // Ensure the directory for a file-backed database exists.
-  if (databasePath !== ":memory:") {
-    mkdirSync(dirname(databasePath), { recursive: true });
+  if (config.databasePath !== ":memory:") {
+    mkdirSync(dirname(config.databasePath), { recursive: true });
   }
 
-  const app = createApp({ databasePath, defaultCurrency });
+  const app = createApp({
+    databasePath: config.databasePath,
+    defaultCurrency: config.defaultCurrency,
+  });
 
   const server = Bun.serve({
-    port,
+    hostname: config.hostname,
+    port: config.port,
     fetch: app.fetch,
   });
 
   // eslint-disable-next-line no-console
-  console.log(`Kakeibo Engine listening on http://localhost:${server.port}`);
+  console.log(`Kakeibo Engine listening on http://${server.hostname}:${server.port}`);
 
   const shutdown = (): void => {
     server.stop();
