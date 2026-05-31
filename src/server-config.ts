@@ -23,10 +23,14 @@ type Env = Record<string, string | undefined>;
 
 /** Builds the {@link ServerConfig} from an environment map. */
 export function loadServerConfig(env: Env): ServerConfig {
+  const port = Number(env.PORT);
   return {
-    port: Number(env.PORT ?? 3000),
-    hostname: env.HOST ?? "127.0.0.1",
-    databasePath: env.DATABASE_PATH ?? "./data/kakeibo.sqlite",
-    defaultCurrency: env.DEFAULT_CURRENCY ?? "JPY",
+    // Fall back when PORT is missing, empty, or not a positive integer.
+    port: Number.isInteger(port) && port > 0 ? port : 3000,
+    // Use `||` (not `??`) so an empty/whitespace HOST cannot silently bind to
+    // all interfaces — it falls back to loopback just like an unset value.
+    hostname: env.HOST?.trim() || "127.0.0.1",
+    databasePath: env.DATABASE_PATH?.trim() || "./data/kakeibo.sqlite",
+    defaultCurrency: env.DEFAULT_CURRENCY?.trim() || "JPY",
   };
 }
