@@ -5,6 +5,7 @@ import { type DeleteTransaction } from "../../application/use-cases/delete-trans
 import { type GetMonthlyPlan } from "../../application/use-cases/get-monthly-plan.ts";
 import { type GetMonthlySummary } from "../../application/use-cases/get-monthly-summary.ts";
 import { type GetReflection } from "../../application/use-cases/get-reflection.ts";
+import { type GetTrend } from "../../application/use-cases/get-trend.ts";
 import { type ListTransactions } from "../../application/use-cases/list-transactions.ts";
 import { type RecordTransaction } from "../../application/use-cases/record-transaction.ts";
 import { type SaveMonthlyPlan } from "../../application/use-cases/save-monthly-plan.ts";
@@ -15,6 +16,7 @@ import {
   reflectionToDto,
   summaryToDto,
   transactionToDto,
+  trendToDto,
 } from "./presenters.ts";
 import {
   recordTransactionSchema,
@@ -32,6 +34,7 @@ export interface RouterDeps {
   getMonthlySummary: GetMonthlySummary;
   saveReflection: SaveReflection;
   getReflection: GetReflection;
+  getTrend: GetTrend;
   defaultCurrency: string;
   /** Optional static-asset handler for the web UI (returns null to fall through). */
   serveStatic?: (pathname: string) => Promise<Response | null>;
@@ -132,6 +135,16 @@ function buildRoutes(deps: RouterDeps): Route[] {
       handler: async (_req, ctx) => {
         const summary = await deps.getMonthlySummary.execute(requireMonth(ctx));
         return json(summaryToDto(summary));
+      },
+    },
+    {
+      method: "GET",
+      pattern: "/api/trend",
+      handler: async (_req, ctx) => {
+        const monthsParam = ctx.url.searchParams.get("months");
+        const months = monthsParam === null ? 6 : Number(monthsParam);
+        const points = await deps.getTrend.execute(requireMonth(ctx), months);
+        return json(trendToDto(points));
       },
     },
     {

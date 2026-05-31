@@ -67,4 +67,17 @@ export class YearMonth {
   contains(date: Date): boolean {
     return date.getUTCFullYear() === this.year && date.getUTCMonth() + 1 === this.month;
   }
+
+  /**
+   * Returns the month `count` months before this one (handling year rollover).
+   * A negative `count` moves forward in time.
+   */
+  minusMonths(count: number): YearMonth {
+    if (!Number.isInteger(count)) {
+      throw new InvalidValueError(`Month offset must be an integer, received: ${count}`);
+    }
+    // Convert to a zero-based absolute month index, shift, then convert back.
+    const zeroBased = this.year * 12 + (this.month - 1) - count;
+    return YearMonth.of(Math.floor(zeroBased / 12), (zeroBased % 12) + 1);
+  }
 }

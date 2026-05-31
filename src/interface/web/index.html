@@ -107,6 +107,25 @@
         <div id="categories"><p class="muted">Loading…</p></div>
       </section>
 
+      <section class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap">
+          <h2 style="margin: 0">Trend</h2>
+          <div class="field" style="max-width: 150px; flex: 0 0 auto">
+            <select id="trend-range">
+              <option value="3">Last 3 months</option>
+              <option value="6" selected>Last 6 months</option>
+              <option value="12">Last 12 months</option>
+            </select>
+          </div>
+        </div>
+        <div id="trend" style="margin-top: 12px"><p class="muted">Loading…</p></div>
+        <div style="display: flex; gap: 16px; margin-top: 10px; font-size: 0.82rem" class="muted">
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:2px"></span> Income</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--warn);border-radius:2px"></span> Expense</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#60a5fa;border-radius:2px"></span> Savings</span>
+        </div>
+      </section>
+
       <section class="grid" style="grid-template-columns: 1fr 1fr">
         <div class="card">
           <h2>Add transaction</h2>
