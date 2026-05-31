@@ -26,26 +26,45 @@ function toDomain(row: TransactionRow): Transaction {
   });
 }
 
+/** Maps a domain transaction to the bound parameters for an insert statement. */
+function toParams(transaction: Transaction): Record<string, string | number | null> {
+  return {
+    $id: transaction.id,
+    $type: transaction.type,
+    $amount: transaction.amount.amount,
+    $currency: transaction.amount.currency,
+    $category: (transaction.category as KakeiboCategory | undefined) ?? null,
+    $occurredAt: transaction.occurredAt.toISOString(),
+    $note: transaction.note,
+  };
+}
+
+const INSERT_OR_REPLACE_SQL = `INSERT OR REPLACE INTO transactions
+   (id, type, amount_minor, currency, category, occurred_at, note)
+ VALUES ($id, $type, $amount, $currency, $category, $occurredAt, $note)`;
+
+const INSERT_SQL = `INSERT INTO transactions
+   (id, type, amount_minor, currency, category, occurred_at, note)
+ VALUES ($id, $type, $amount, $currency, $category, $occurredAt, $note)`;
+
 /** SQLite-backed {@link TransactionRepository} using `bun:sqlite`. */
 export class SqliteTransactionRepository implements TransactionRepository {
   constructor(private readonly db: Database) {}
 
   async save(transaction: Transaction): Promise<void> {
-    this.db
-      .query(
-        `INSERT OR REPLACE INTO transactions
-           (id, type, amount_minor, currency, category, occurred_at, note)
-         VALUES ($id, $type, $amount, $currency, $category, $occurredAt, $note)`,
-      )
-      .run({
-        $id: transaction.id,
-        $type: transaction.type,
-        $amount: transaction.amount.amount,
-        $currency: transaction.amount.currency,
-        $category: (transaction.category as KakeiboCategory | undefined) ?? null,
-        $occurredAt: transaction.occurredAt.toISOString(),
-        $note: transaction.note,
-      });
+    this.db.query(INSERT_OR_REPLACE_SQL).run(toParams(transaction));
+  }
+
+  async saveMany(transactions: readonly Transaction[]): Promise<void> {
+    const insert = this.db.query(INSERT_SQL);
+    // db.transaction wraps the batch in BEGIN/COMMIT and rolls back on throw,
+    // so a failing row leaves none of the batch persisted.
+    const run = this.db.transaction((rows: readonly Transaction[]) => {
+      for (const transaction of rows) {
+        insert.run(toParams(transaction));
+      }
+    });
+    run(transactions);
   }
 
   async findById(id: string): Promise<Transaction | null> {

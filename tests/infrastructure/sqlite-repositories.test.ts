@@ -61,6 +61,25 @@ describe("SqliteTransactionRepository", () => {
     expect(await repo.findById("in-1")).toBeNull();
   });
 
+  test("saveMany persists a whole batch", async () => {
+    const repo = new SqliteTransactionRepository(db);
+    await repo.saveMany([
+      income("m-1", new Date("2026-05-01T00:00:00Z")),
+      income("m-2", new Date("2026-05-02T00:00:00Z")),
+    ]);
+    expect(await repo.findByMonth(YearMonth.parse("2026-05"))).toHaveLength(2);
+  });
+
+  test("saveMany is atomic: a failing batch persists nothing", async () => {
+    const repo = new SqliteTransactionRepository(db);
+    const a = income("dup", new Date("2026-05-01T00:00:00Z"));
+    const b = income("dup", new Date("2026-05-02T00:00:00Z")); // duplicate id
+
+    await expect(repo.saveMany([a, b])).rejects.toThrow();
+    // The transaction rolled back: not even the first row was committed.
+    expect(await repo.findById("dup")).toBeNull();
+  });
+
   function income(id: string, occurredAt: Date): Transaction {
     return new Transaction({
       id,

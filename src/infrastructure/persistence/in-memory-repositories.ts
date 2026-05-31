@@ -21,6 +21,21 @@ export class InMemoryTransactionRepository implements TransactionRepository {
     this.store.set(transaction.id, transaction);
   }
 
+  async saveMany(transactions: readonly Transaction[]): Promise<void> {
+    // Reject a batch with duplicate ids before mutating, so the operation is
+    // all-or-nothing like the SQLite adapter.
+    const ids = new Set<string>();
+    for (const transaction of transactions) {
+      if (ids.has(transaction.id) || this.store.has(transaction.id)) {
+        throw new Error(`Duplicate transaction id in batch: ${transaction.id}`);
+      }
+      ids.add(transaction.id);
+    }
+    for (const transaction of transactions) {
+      this.store.set(transaction.id, transaction);
+    }
+  }
+
   async findById(id: string): Promise<Transaction | null> {
     return this.store.get(id) ?? null;
   }
