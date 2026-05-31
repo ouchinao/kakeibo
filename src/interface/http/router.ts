@@ -228,6 +228,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           plannedIncomeMinor: toMinor(input.plannedIncome),
           savingsGoalMinor: toMinor(input.savingsGoal),
           categoryBudgetsMinor,
+          rate: input.rate,
         });
         return json(planToDto(plan));
       },

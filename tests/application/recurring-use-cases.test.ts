@@ -41,7 +41,7 @@ describe("recurring expense use cases", () => {
     remove = new DeleteRecurringExpense(recurringRepo);
     post = new PostRecurringExpenses(recurringRepo, postingLog, txRepo, ids);
     forecast = new GetForecast(txRepo, planRepo, recurringRepo, postingLog, "JPY");
-    savePlan = new SaveMonthlyPlan(planRepo, ids);
+    savePlan = new SaveMonthlyPlan(planRepo, ids, "JPY");
   });
 
   const addRent = () =>

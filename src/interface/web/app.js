@@ -28,6 +28,8 @@ const els = {
   txRate: document.getElementById("tx-rate"),
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
+  planRateField: document.getElementById("plan-rate-field"),
+  planRate: document.getElementById("plan-rate"),
   reflectionForm: document.getElementById("reflection-form"),
   forecast: document.getElementById("forecast"),
   recurringForm: document.getElementById("recurring-form"),
@@ -324,6 +326,8 @@ function applyCurrency() {
   els.txRate.required = isForeign;
   els.recRateField.style.display = isForeign ? "" : "none";
   els.recRate.required = isForeign;
+  els.planRateField.style.display = isForeign ? "" : "none";
+  els.planRate.required = isForeign;
 }
 
 function setCurrency(code) {
@@ -407,6 +411,8 @@ els.planForm.addEventListener("submit", async (event) => {
     savingsGoal: Number(document.getElementById("plan-savings").value),
     categoryBudgets,
   };
+  // Send the base-currency rate for a foreign-currency plan.
+  if (currentCurrency !== baseCurrency) body.rate = Number(els.planRate.value);
   try {
     await api(`/api/plans/${currentMonth()}`, { method: "PUT", body: JSON.stringify(body) });
     toast(t("toast.planSaved"));
