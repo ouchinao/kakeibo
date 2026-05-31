@@ -25,10 +25,11 @@ describe("FrankfurterRateProvider", () => {
       seenUrl = String(input);
       return new Response(JSON.stringify({ date: "2026-05-29", rates: { JPY: 150 } }), { status: 200 });
     }) as unknown as typeof fetch;
-    const provider = new FrankfurterRateProvider(spy, "https://example.test/v1");
+    const provider = new FrankfurterRateProvider(spy, "https://example.test");
     await provider.getLatestRate("USD", "JPY");
-    expect(seenUrl).toContain("base=USD");
-    expect(seenUrl).toContain("symbols=JPY");
+    expect(seenUrl).toContain("/latest?");
+    expect(seenUrl).toContain("from=USD");
+    expect(seenUrl).toContain("to=JPY");
   });
 
   test("returns null on a non-OK response (e.g. unsupported currency)", async () => {
