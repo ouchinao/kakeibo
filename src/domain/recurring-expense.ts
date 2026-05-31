@@ -11,6 +11,12 @@ export interface RecurringExpenseProps {
   /** Day of the month the charge falls on (1–28, to stay valid in every month). */
   readonly dayOfMonth: number;
   readonly active: boolean;
+  /**
+   * The amount converted to the app's base currency at creation time. Defaults
+   * to `amount` (already base currency / rate 1). Forecasts and posted
+   * transactions use this so mixed-currency projections total correctly.
+   */
+  readonly baseAmount?: Money | undefined;
 }
 
 /**
@@ -32,6 +38,8 @@ export class RecurringExpense {
   readonly category: KakeiboCategory;
   readonly dayOfMonth: number;
   readonly active: boolean;
+  /** The amount expressed in the base currency (defaults to {@link amount}). */
+  readonly baseAmount: Money;
 
   constructor(props: RecurringExpenseProps) {
     if (props.name.trim().length === 0) {
@@ -39,6 +47,9 @@ export class RecurringExpense {
     }
     if (!props.amount.isPositive()) {
       throw new BusinessRuleError("Recurring expense amount must be strictly positive");
+    }
+    if (props.baseAmount !== undefined && !props.baseAmount.isPositive()) {
+      throw new BusinessRuleError("Recurring expense base amount must be strictly positive");
     }
     if (!Number.isInteger(props.dayOfMonth) || props.dayOfMonth < 1 || props.dayOfMonth > 28) {
       throw new InvalidValueError("dayOfMonth must be an integer between 1 and 28");
@@ -50,6 +61,7 @@ export class RecurringExpense {
     this.category = props.category;
     this.dayOfMonth = props.dayOfMonth;
     this.active = props.active;
+    this.baseAmount = props.baseAmount ?? props.amount;
     Object.freeze(this);
   }
 

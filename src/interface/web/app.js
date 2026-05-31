@@ -31,6 +31,8 @@ const els = {
   reflectionForm: document.getElementById("reflection-form"),
   forecast: document.getElementById("forecast"),
   recurringForm: document.getElementById("recurring-form"),
+  recRateField: document.getElementById("rec-rate-field"),
+  recRate: document.getElementById("rec-rate"),
   recurringList: document.getElementById("recurring-list"),
   postRecurringBtn: document.getElementById("post-recurring-btn"),
   trend: document.getElementById("trend"),
@@ -320,6 +322,8 @@ function applyCurrency() {
   const isForeign = currentCurrency !== baseCurrency;
   els.txRateField.style.display = isForeign ? "" : "none";
   els.txRate.required = isForeign;
+  els.recRateField.style.display = isForeign ? "" : "none";
+  els.recRate.required = isForeign;
 }
 
 function setCurrency(code) {
@@ -438,6 +442,8 @@ els.recurringForm.addEventListener("submit", async (event) => {
     category: document.getElementById("rec-category").value,
     dayOfMonth: Number(document.getElementById("rec-day").value),
   };
+  // Send the base-currency rate for foreign-currency expenses.
+  if (currentCurrency !== baseCurrency) payload.rate = Number(els.recRate.value);
   try {
     await api("/api/recurring", { method: "POST", body: JSON.stringify(payload) });
     els.recurringForm.reset();

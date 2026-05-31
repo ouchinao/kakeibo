@@ -75,7 +75,7 @@ export function createApp(config: AppConfig): App {
     getMonthlySummary: new GetMonthlySummary(transactions, plans, config.defaultCurrency),
     saveReflection: new SaveReflection(reflections, ids),
     getReflection: new GetReflection(reflections),
-    createRecurringExpense: new CreateRecurringExpense(recurring, ids),
+    createRecurringExpense: new CreateRecurringExpense(recurring, ids, config.defaultCurrency),
     listRecurringExpenses: new ListRecurringExpenses(recurring),
     deleteRecurringExpense: new DeleteRecurringExpense(recurring),
     postRecurringExpenses: new PostRecurringExpenses(recurring, postingLog, transactions, ids),
