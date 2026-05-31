@@ -92,4 +92,58 @@ describe("Transaction", () => {
     expect(expense.signedAmount().amount).toBe(-100);
     expect(income.signedAmount().amount).toBe(100);
   });
+
+  test("baseAmount defaults to the original amount when omitted", () => {
+    const tx = new Transaction({
+      id: "t8",
+      type: TransactionType.EXPENSE,
+      amount: Money.ofMinor(1500, "JPY"),
+      category: KakeiboCategory.NEEDS,
+      occurredAt: baseDate,
+      note: "",
+    });
+    expect(tx.baseAmount.equals(tx.amount)).toBe(true);
+  });
+
+  test("keeps a distinct base-currency amount when provided", () => {
+    const tx = new Transaction({
+      id: "t9",
+      type: TransactionType.EXPENSE,
+      amount: Money.ofMinor(1234, "USD"), // $12.34
+      baseAmount: Money.ofMinor(1850, "JPY"), // ¥1,850 at booking rate
+      category: KakeiboCategory.WANTS,
+      occurredAt: baseDate,
+      note: "",
+    });
+    expect(tx.amount.currency).toBe("USD");
+    expect(tx.baseAmount.currency).toBe("JPY");
+    expect(tx.baseAmount.amount).toBe(1850);
+  });
+
+  test("rejects a non-positive base amount", () => {
+    expect(
+      () =>
+        new Transaction({
+          id: "t10",
+          type: TransactionType.INCOME,
+          amount: Money.ofMinor(100, "USD"),
+          baseAmount: Money.ofMinor(0, "JPY"),
+          occurredAt: baseDate,
+          note: "",
+        }),
+    ).toThrow(BusinessRuleError);
+  });
+
+  test("signedBaseAmount mirrors signedAmount in the base currency", () => {
+    const tx = new Transaction({
+      id: "t11",
+      type: TransactionType.EXPENSE,
+      amount: Money.ofMinor(1234, "USD"),
+      baseAmount: Money.ofMinor(1850, "JPY"),
+      category: KakeiboCategory.WANTS,
+      occurredAt: baseDate,
+      note: "",
+    });
+    expect(tx.signedBaseAmount().amount).toBe(-1850);
+  });
 });
