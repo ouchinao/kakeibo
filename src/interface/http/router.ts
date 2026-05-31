@@ -240,6 +240,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           plannedIncomeMinor: toMinor(input.plannedIncome),
           savingsGoalMinor: toMinor(input.savingsGoal),
           categoryBudgetsMinor,
+          rate: input.rate,
         });
         return json(planToDto(plan));
       },
@@ -265,6 +266,7 @@ function buildRoutes(deps: RouterDeps): Route[] {
           category: input.category as KakeiboCategory,
           dayOfMonth: input.dayOfMonth,
           active: input.active,
+          rate: input.rate,
         });
         return json(recurringExpenseToDto(recurring), 201);
       },

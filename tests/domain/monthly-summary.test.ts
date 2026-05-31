@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { KakeiboCategory } from "../../src/domain/category.ts";
 import { Money } from "../../src/domain/money.ts";
 import { buildMonthlySummary } from "../../src/domain/monthly-summary.ts";
+import { MonthlyPlan } from "../../src/domain/monthly-plan.ts";
 import { Transaction, TransactionType } from "../../src/domain/transaction.ts";
 import { YearMonth } from "../../src/domain/year-month.ts";
 
@@ -32,5 +33,22 @@ describe("buildMonthlySummary currency handling", () => {
     expect(summary.totalExpense.amount).toBe(1500);
     const needs = summary.categories.find((c) => c.category === KakeiboCategory.NEEDS);
     expect(needs?.spent.amount).toBe(1500);
+  });
+
+  test("applies a foreign-currency plan via its base-currency amounts", () => {
+    const plan = new MonthlyPlan({
+      id: "p",
+      month,
+      plannedIncome: Money.ofMinor(200000, "USD"), // $2,000.00
+      savingsGoal: Money.ofMinor(50000, "USD"), // $500.00
+      categoryBudgets: new Map(),
+      basePlannedIncome: Money.ofMinor(300000, "JPY"), // converted at 150
+      baseSavingsGoal: Money.ofMinor(75000, "JPY"),
+      baseCategoryBudgets: new Map(),
+    });
+    const summary = buildMonthlySummary({ month, currency: "JPY", plan, transactions: [] });
+    expect(summary.hasPlan).toBe(true);
+    expect(summary.savingsGoal.amount).toBe(75000);
+    expect(summary.availableToSpend.amount).toBe(225000);
   });
 });

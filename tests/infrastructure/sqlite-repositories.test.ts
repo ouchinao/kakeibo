@@ -128,6 +128,27 @@ describe("SqliteMonthlyPlanRepository", () => {
     expect(loaded?.budgetFor(KakeiboCategory.NEEDS).amount).toBe(150000);
   });
 
+  test("round-trips the base-currency amounts of a foreign plan", async () => {
+    const repo = new SqliteMonthlyPlanRepository(db);
+    await repo.save(
+      new MonthlyPlan({
+        id: "plan-usd",
+        month: YearMonth.parse("2026-05"),
+        plannedIncome: Money.ofMinor(200000, "USD"),
+        savingsGoal: Money.ofMinor(50000, "USD"),
+        categoryBudgets: new Map([[KakeiboCategory.NEEDS, Money.ofMinor(100000, "USD")]]),
+        basePlannedIncome: Money.ofMinor(300000, "JPY"),
+        baseSavingsGoal: Money.ofMinor(75000, "JPY"),
+        baseCategoryBudgets: new Map([[KakeiboCategory.NEEDS, Money.ofMinor(150000, "JPY")]]),
+      }),
+    );
+    const loaded = await repo.findByMonth(YearMonth.parse("2026-05"));
+    expect(loaded?.currency).toBe("USD");
+    expect(loaded?.baseCurrency).toBe("JPY");
+    expect(loaded?.baseAvailableToSpend().amount).toBe(225000);
+    expect(loaded?.baseBudgetFor(KakeiboCategory.NEEDS).amount).toBe(150000);
+  });
+
   test("save acts as an upsert keyed by month", async () => {
     const repo = new SqliteMonthlyPlanRepository(db);
     const month = YearMonth.parse("2026-05");

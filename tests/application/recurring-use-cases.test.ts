@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { KakeiboCategory } from "../../src/domain/category.ts";
 import { YearMonth } from "../../src/domain/year-month.ts";
-import { NotFoundError } from "../../src/application/errors.ts";
+import { ApplicationError, NotFoundError } from "../../src/application/errors.ts";
 import { CreateRecurringExpense } from "../../src/application/use-cases/create-recurring-expense.ts";
 import { DeleteRecurringExpense } from "../../src/application/use-cases/delete-recurring-expense.ts";
 import { GetForecast } from "../../src/application/use-cases/get-forecast.ts";
@@ -36,12 +36,12 @@ describe("recurring expense use cases", () => {
     txRepo = new InMemoryTransactionRepository();
     planRepo = new InMemoryMonthlyPlanRepository();
     const ids = new SequentialIdGenerator();
-    create = new CreateRecurringExpense(recurringRepo, ids);
+    create = new CreateRecurringExpense(recurringRepo, ids, "JPY");
     list = new ListRecurringExpenses(recurringRepo);
     remove = new DeleteRecurringExpense(recurringRepo);
     post = new PostRecurringExpenses(recurringRepo, postingLog, txRepo, ids);
     forecast = new GetForecast(txRepo, planRepo, recurringRepo, postingLog, "JPY");
-    savePlan = new SaveMonthlyPlan(planRepo, ids);
+    savePlan = new SaveMonthlyPlan(planRepo, ids, "JPY");
   });
 
   const addRent = () =>
@@ -58,6 +58,62 @@ describe("recurring expense use cases", () => {
     const all = await list.execute();
     expect(all).toHaveLength(1);
     expect(all[0]?.name).toBe("Rent");
+  });
+
+  test("requires an explicit rate for a foreign-currency recurring expense", async () => {
+    await expect(
+      create.execute({
+        name: "Netflix",
+        amountMinor: 1500, // $15.00; base is JPY, no rate
+        currency: "USD",
+        category: KakeiboCategory.WANTS,
+        dayOfMonth: 1,
+      }),
+    ).rejects.toThrow(ApplicationError);
+  });
+
+  test("converts a foreign recurring expense to the base currency at creation", async () => {
+    const netflix = await create.execute({
+      name: "Netflix",
+      amountMinor: 1500, // $15.00
+      currency: "USD",
+      category: KakeiboCategory.WANTS,
+      dayOfMonth: 1,
+      rate: 150, // USD -> JPY
+    });
+    expect(netflix.amount.currency).toBe("USD");
+    expect(netflix.baseAmount.currency).toBe("JPY");
+    expect(netflix.baseAmount.amount).toBe(2250); // round(15 * 150), JPY has no minor unit
+  });
+
+  test("a posted foreign recurring expense carries its base-currency amount", async () => {
+    await create.execute({
+      name: "Netflix",
+      amountMinor: 1500,
+      currency: "USD",
+      category: KakeiboCategory.WANTS,
+      dayOfMonth: 1,
+      rate: 150,
+    });
+    await post.execute("2026-05");
+    const txs = await txRepo.findByMonth(YearMonth.parse("2026-05"));
+    expect(txs[0]?.amount.currency).toBe("USD");
+    expect(txs[0]?.baseAmount.currency).toBe("JPY");
+    expect(txs[0]?.baseAmount.amount).toBe(2250);
+  });
+
+  test("forecast projects a foreign recurring expense in the base currency", async () => {
+    await create.execute({
+      name: "Netflix",
+      amountMinor: 1500,
+      currency: "USD",
+      category: KakeiboCategory.WANTS,
+      dayOfMonth: 1,
+      rate: 150,
+    });
+    const before = await forecast.execute("2026-05");
+    expect(before.currency).toBe("JPY");
+    expect(before.recurringRemaining.amount).toBe(2250);
   });
 
   test("deletes a recurring expense", async () => {

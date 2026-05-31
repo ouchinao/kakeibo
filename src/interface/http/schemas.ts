@@ -40,6 +40,8 @@ export const saveMonthlyPlanSchema = z.object({
   plannedIncome: nonNegativeAmount,
   savingsGoal: nonNegativeAmount,
   categoryBudgets: z.record(categoryEnum, nonNegativeAmount).optional(),
+  /** Rate to the base currency (required for a foreign-currency plan). */
+  rate: positiveAmount.optional(),
 });
 
 export const saveReflectionSchema = z.object({
@@ -60,6 +62,8 @@ export const createRecurringExpenseSchema = z.object({
   category: categoryEnum,
   dayOfMonth: z.number().int().min(1).max(28),
   active: z.boolean().optional(),
+  /** Rate to the base currency (required for foreign-currency expenses). */
+  rate: positiveAmount.optional(),
 });
 
 export type RecordTransactionInput = z.infer<typeof recordTransactionSchema>;

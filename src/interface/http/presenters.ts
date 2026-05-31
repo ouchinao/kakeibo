@@ -96,6 +96,7 @@ export function recurringExpenseToDto(recurring: RecurringExpense) {
     id: recurring.id,
     name: recurring.name,
     amount: moneyToDto(recurring.amount),
+    baseAmount: moneyToDto(recurring.baseAmount),
     category: recurring.category,
     dayOfMonth: recurring.dayOfMonth,
     active: recurring.active,

@@ -23,7 +23,7 @@ describe("GetTrend", () => {
     planRepo = new InMemoryMonthlyPlanRepository();
     const ids = new SequentialIdGenerator();
     record = new RecordTransaction(txRepo, ids, new FixedClock(new Date("2026-05-15T00:00:00Z")), "JPY");
-    savePlan = new SaveMonthlyPlan(planRepo, ids);
+    savePlan = new SaveMonthlyPlan(planRepo, ids, "JPY");
     trend = new GetTrend(txRepo, planRepo, "JPY");
   });
 

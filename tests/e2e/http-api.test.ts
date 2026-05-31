@@ -135,6 +135,28 @@ describe("HTTP API", () => {
     expect((await readJson(res)).error.code).toBe("BusinessRuleError");
   });
 
+  test("rejects a foreign-currency plan without a rate", async () => {
+    const res = await request("PUT", "/api/plans/2026-05", {
+      currency: "USD",
+      plannedIncome: 2000,
+      savingsGoal: 500,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("applies a foreign-currency plan to the base-currency summary", async () => {
+    await request("PUT", "/api/plans/2026-05", {
+      currency: "USD",
+      plannedIncome: 2000,
+      savingsGoal: 500,
+      rate: 150, // USD -> JPY (base)
+    });
+    const summary = await readJson(await request("GET", "/api/summary?month=2026-05"));
+    expect(summary.currency).toBe("JPY");
+    expect(summary.availableToSpend.minor).toBe(225000); // (2000 - 500) * 150
+    expect(summary.savingsGoal.minor).toBe(75000);
+  });
+
   test("unknown routes yield 404", async () => {
     const res = await request("GET", "/api/unknown");
     expect(res.status).toBe(404);
