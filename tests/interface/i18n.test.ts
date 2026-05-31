@@ -63,11 +63,33 @@ describe("errorMessage", () => {
     );
   });
 
-  test("localises a domain error code (e.g. BusinessRuleError)", () => {
-    expect(errorMessage("ja", "BusinessRuleError", "some english detail")).not.toBe(
-      "some english detail",
+  test("passes the server message through for detail-bearing domain/app errors", () => {
+    // These errors carry specifics (a CSV row, the offending value, the missing
+    // parameter…) that a generic localised sentence would discard, so the raw
+    // server message wins.
+    const detail = "Row 3: invalid amount";
+    for (const code of [
+      "BusinessRuleError",
+      "InvalidValueError",
+      "CurrencyMismatchError",
+      "CsvImportError",
+      "RouteError",
+      "ApplicationError",
+    ]) {
+      expect(errorMessage("ja", code, detail)).toBe(detail);
+      expect(errorMessage("en", code, detail)).toBe(detail);
+    }
+  });
+
+  test("still localises generic transport error codes", () => {
+    // These have no useful per-instance detail, so the localised message wins
+    // (and we never surface a raw internal 500 message to the user).
+    expect(errorMessage("ja", "NOT_FOUND", "Transaction not found: x")).toBe(
+      "対象の項目が見つかりませんでした。",
     );
-    expect(errorMessage("ja", "BusinessRuleError", "some english detail").length).toBeGreaterThan(0);
+    expect(errorMessage("ja", "INTERNAL_ERROR", "boom at app.ts:42")).toBe(
+      "サーバーで予期しないエラーが発生しました。もう一度お試しください。",
+    );
   });
 
   test("falls back to the server-provided message for an unmapped code", () => {
