@@ -63,3 +63,22 @@ export async function auditStaticPage(): Promise<AxeViolation[]> {
     GlobalRegistrator.unregister();
   }
 }
+
+/**
+ * Loads the static web UI markup into a happy-dom document and invokes `fn`
+ * with it, for assertions that aren't expressible as axe rules (e.g. live
+ * regions). The document is torn down afterwards.
+ */
+export async function withStaticDocument<T>(fn: (doc: any) => T): Promise<T> {
+  GlobalRegistrator.register();
+  try {
+    const doc = (globalThis as unknown as { document: any }).document;
+    const html = readFileSync(INDEX_HTML, "utf8");
+    doc.documentElement.innerHTML = html
+      .replace(/<!doctype html>/i, "")
+      .replace(/<\/?html[^>]*>/gi, "");
+    return fn(doc);
+  } finally {
+    GlobalRegistrator.unregister();
+  }
+}

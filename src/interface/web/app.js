@@ -2,6 +2,11 @@
 // Vanilla ES modules, no build step and no external dependencies, so the UI
 // works fully offline alongside the local API.
 
+import {
+  deleteRecurringAriaLabel,
+  deleteTransactionAriaLabel,
+  trendChartAriaLabel,
+} from "./a11y-labels.js";
 import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
@@ -123,7 +128,7 @@ function renderTransactions(list) {
           <td>${category}</td>
           <td>${escapeHtml(tx.note)}</td>
           <td style="text-align:right">${sign}${tx.amount.formatted}</td>
-          <td style="text-align:right"><button class="danger" data-id="${tx.id}">${t("button.delete")}</button></td>
+          <td style="text-align:right"><button class="danger" data-id="${tx.id}" aria-label="${escapeHtml(deleteTransactionAriaLabel(tx, t))}">${t("button.delete")}</button></td>
         </tr>`;
     })
     .join("");
@@ -167,7 +172,7 @@ function renderRecurring(list) {
           </div>
           <div style="display:flex; align-items:center; gap:10px">
             <span>${r.amount.formatted}</span>
-            <button class="danger" data-recurring-id="${r.id}">${t("button.delete")}</button>
+            <button class="danger" data-recurring-id="${r.id}" aria-label="${escapeHtml(deleteRecurringAriaLabel(r, t))}">${t("button.delete")}</button>
           </div>
         </div>`,
     )
@@ -216,7 +221,7 @@ function renderTrend(points) {
     .join("");
 
   els.trend.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Monthly trend chart">
+    <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escapeHtml(trendChartAriaLabel(points, t))}">
       <line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" />
       ${bars}
     </svg>`;
@@ -227,8 +232,8 @@ function renderReflection(reflection) {
     const value = reflection?.answers?.[key] ?? "";
     return `
       <div>
-        <label>${t(`question.${key}`)}</label>
-        <textarea data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
+        <label for="reflection-${key}">${t(`question.${key}`)}</label>
+        <textarea id="reflection-${key}" data-key="${key}" rows="2">${escapeHtml(value)}</textarea>
       </div>`;
   }).join("");
 }
@@ -248,6 +253,9 @@ function applyStaticTranslations() {
   }
   for (const el of document.querySelectorAll("[data-i18n-placeholder]")) {
     el.setAttribute("placeholder", t(el.dataset.i18nPlaceholder));
+  }
+  for (const el of document.querySelectorAll("[data-i18n-aria-label]")) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAriaLabel));
   }
 }
 

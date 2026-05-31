@@ -11,6 +11,7 @@ export const translations = {
     "app.subtitle": "— mindful monthly budgeting",
     "label.month": "Month",
     "label.language": "Language",
+    "label.trendRange": "Trend range",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -40,6 +41,7 @@ export const translations = {
     "table.category": "Category",
     "table.note": "Note",
     "table.amount": "Amount",
+    "table.actions": "Actions",
 
     "type.income": "Income",
     "type.expense": "Expense",
@@ -85,8 +87,8 @@ export const translations = {
     "placeholder.recurringName": "Rent, Netflix…",
     "button.addRecurring": "Add recurring",
     "button.postToMonth": "Post to this month",
-    "button.exportCsv": "⬇ Export CSV",
-    "button.importCsv": "⬆ Import CSV",
+    "button.exportCsv": "Export CSV",
+    "button.importCsv": "Import CSV",
     "trend.none": "No data.",
     "trend.savings": "Savings",
     "trend.range3": "Last 3 months",
@@ -101,6 +103,7 @@ export const translations = {
     "app.subtitle": "— 心がけて続ける月次家計簿",
     "label.month": "月",
     "label.language": "言語",
+    "label.trendRange": "推移の期間",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",
@@ -130,6 +133,7 @@ export const translations = {
     "table.category": "カテゴリ",
     "table.note": "メモ",
     "table.amount": "金額",
+    "table.actions": "操作",
 
     "type.income": "収入",
     "type.expense": "支出",
@@ -175,8 +179,8 @@ export const translations = {
     "placeholder.recurringName": "家賃、Netflix など",
     "button.addRecurring": "定期支出を追加",
     "button.postToMonth": "今月に計上",
-    "button.exportCsv": "⬇ CSV書き出し",
-    "button.importCsv": "⬆ CSV読み込み",
+    "button.exportCsv": "CSV書き出し",
+    "button.importCsv": "CSV読み込み",
     "trend.none": "データがありません。",
     "trend.savings": "貯蓄",
     "trend.range3": "直近3か月",
