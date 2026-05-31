@@ -15,8 +15,12 @@ export interface PostRecurringResult {
 /**
  * Auto-posts active recurring expenses as transactions for a month.
  *
- * Idempotent: an expense already posted for the month (recorded in the posting
- * log) is skipped, so running it twice does not create duplicates.
+ * Idempotent under normal operation: an expense already recorded in the posting
+ * log for the month is skipped, so running it twice does not create duplicates.
+ * The transaction is saved before the log entry is written (and these are two
+ * separate writes, not one DB transaction); should the process fail in between,
+ * a subsequent run may re-post that expense — duplicates are preferred over a
+ * silently dropped charge.
  */
 export class PostRecurringExpenses {
   constructor(

@@ -62,7 +62,14 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
 
   let recurringRemaining = zero;
   for (const recurring of recurringExpenses) {
-    if (recurring.active && !isPosted(recurring.id)) {
+    // The forecast is single-currency: recurring expenses defined in another
+    // currency are not representable here, so they are skipped rather than
+    // crashing the whole forecast with a CurrencyMismatchError.
+    if (
+      recurring.active &&
+      !isPosted(recurring.id) &&
+      recurring.amount.currency === currency
+    ) {
       recurringRemaining = recurringRemaining.add(recurring.amount);
     }
   }
