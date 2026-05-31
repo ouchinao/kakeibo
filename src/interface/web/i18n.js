@@ -14,6 +14,9 @@ export const translations = {
     "label.currency": "Currency",
     "label.trendRange": "Trend range",
     "label.rate": "Rate to base currency",
+    "preview.label": "Converted base amount",
+    "preview.convertedBase": "≈ {amount}",
+    "preview.rateWarning": "Double-check this rate — the converted amount looks unusual.",
 
     "heading.categorySpending": "Spending by category",
     "heading.addTransaction": "Add transaction",
@@ -108,6 +111,9 @@ export const translations = {
     "label.currency": "通貨",
     "label.trendRange": "推移の期間",
     "label.rate": "基軸通貨へのレート",
+    "preview.label": "換算後の基軸通貨額",
+    "preview.convertedBase": "≈ {amount}",
+    "preview.rateWarning": "レートを確認してください。換算額が異常に見えます。",
 
     "heading.categorySpending": "カテゴリ別の支出",
     "heading.addTransaction": "取引を追加",

@@ -7,7 +7,7 @@ import {
   deleteTransactionAriaLabel,
   trendChartAriaLabel,
 } from "./a11y-labels.js";
-import { amountStep } from "./currency-format.js";
+import { amountStep, renderRatePreview } from "./currency-format.js";
 import { resolveLanguage, SUPPORTED_LANGUAGES, translate } from "./i18n.js";
 
 const CATEGORY_KEYS = ["NEEDS", "WANTS", "CULTURE", "UNEXPECTED"];
@@ -26,6 +26,8 @@ const els = {
   txCategoryField: document.getElementById("tx-category-field"),
   txRateField: document.getElementById("tx-rate-field"),
   txRate: document.getElementById("tx-rate"),
+  txAmount: document.getElementById("tx-amount"),
+  txRatePreview: document.getElementById("tx-rate-preview"),
   txList: document.getElementById("tx-list"),
   planForm: document.getElementById("plan-form"),
   reflectionForm: document.getElementById("reflection-form"),
@@ -48,6 +50,8 @@ let currentLang = resolveLanguage(
 // code -> minorUnits, loaded from /api/currencies (server is the source of truth).
 let currencyDecimals = {};
 let baseCurrency = "JPY";
+// Base currency { minorUnits, symbol } for formatting the converted-amount preview.
+let baseCurrencyInfo = { minorUnits: 0, symbol: "¥" };
 let currentCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY) ?? "JPY";
 
 /** Translate a key in the active language. */
@@ -305,6 +309,7 @@ function setLanguage(lang) {
   localStorage.setItem(LANGUAGE_STORAGE_KEY, currentLang);
   els.lang.value = currentLang;
   applyStaticTranslations();
+  updateRatePreview();
   refresh();
 }
 
@@ -320,6 +325,29 @@ function applyCurrency() {
   const isForeign = currentCurrency !== baseCurrency;
   els.txRateField.style.display = isForeign ? "" : "none";
   els.txRate.required = isForeign;
+  updateRatePreview();
+}
+
+/**
+ * Refreshes the live "≈ <base amount>" preview from the current amount + rate.
+ * No-op (and cleared) for base-currency entries or empty/invalid input.
+ */
+function updateRatePreview() {
+  if (currentCurrency === baseCurrency) {
+    renderRatePreview(els.txRatePreview, {
+      amountMajor: NaN,
+      rate: NaN,
+      base: baseCurrencyInfo,
+      t,
+    });
+    return;
+  }
+  renderRatePreview(els.txRatePreview, {
+    amountMajor: Number(els.txAmount.value),
+    rate: Number(els.txRate.value),
+    base: baseCurrencyInfo,
+    t,
+  });
 }
 
 function setCurrency(code) {
@@ -335,7 +363,9 @@ function setCurrency(code) {
 async function loadCurrencies() {
   const currencies = await api("/api/currencies");
   currencyDecimals = Object.fromEntries(currencies.map((c) => [c.code, c.minorUnits]));
-  baseCurrency = currencies.find((c) => c.isBase)?.code ?? currencies[0]?.code ?? "JPY";
+  const base = currencies.find((c) => c.isBase) ?? currencies[0];
+  baseCurrency = base?.code ?? "JPY";
+  baseCurrencyInfo = { minorUnits: base?.minorUnits ?? 0, symbol: base?.symbol ?? "¥" };
   els.currency.innerHTML = currencies
     .map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`)
     .join("");
@@ -353,6 +383,8 @@ els.currency.addEventListener("change", () => setCurrency(els.currency.value));
 els.month.addEventListener("change", refresh);
 els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);
+els.txAmount.addEventListener("input", updateRatePreview);
+els.txRate.addEventListener("input", updateRatePreview);
 
 els.txForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -371,6 +403,7 @@ els.txForm.addEventListener("submit", async (event) => {
     await api("/api/transactions", { method: "POST", body: JSON.stringify(payload) });
     els.txForm.reset();
     toggleCategoryField();
+    updateRatePreview();
     toast(t("toast.txAdded"));
     refresh();
   } catch (err) {
