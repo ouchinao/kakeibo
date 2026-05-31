@@ -43,4 +43,26 @@ describe("YearMonth", () => {
     expect(YearMonth.of(2026, 5).equals(YearMonth.parse("2026-05"))).toBe(true);
     expect(YearMonth.of(2026, 5).equals(YearMonth.of(2026, 6))).toBe(false);
   });
+
+  describe("minusMonths", () => {
+    test("subtracts within the same year", () => {
+      expect(YearMonth.parse("2026-05").minusMonths(3).toString()).toBe("2026-02");
+    });
+
+    test("rolls back across a year boundary", () => {
+      expect(YearMonth.parse("2026-02").minusMonths(3).toString()).toBe("2025-11");
+    });
+
+    test("spans multiple years", () => {
+      expect(YearMonth.parse("2026-05").minusMonths(17).toString()).toBe("2024-12");
+    });
+
+    test("a zero offset returns the same month", () => {
+      expect(YearMonth.parse("2026-05").minusMonths(0).toString()).toBe("2026-05");
+    });
+
+    test("a negative offset moves forward in time", () => {
+      expect(YearMonth.parse("2026-11").minusMonths(-3).toString()).toBe("2027-02");
+    });
+  });
 });
