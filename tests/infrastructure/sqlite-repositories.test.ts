@@ -61,6 +61,25 @@ describe("SqliteTransactionRepository", () => {
     expect(await repo.findById("in-1")).toBeNull();
   });
 
+  test("round-trips a distinct base-currency amount", async () => {
+    const repo = new SqliteTransactionRepository(db);
+    await repo.save(
+      new Transaction({
+        id: "fx-1",
+        type: TransactionType.EXPENSE,
+        amount: Money.ofMinor(1234, "USD"),
+        baseAmount: Money.ofMinor(1850, "JPY"),
+        category: KakeiboCategory.WANTS,
+        occurredAt: new Date("2026-05-10T00:00:00Z"),
+        note: "",
+      }),
+    );
+    const loaded = await repo.findById("fx-1");
+    expect(loaded?.amount.format()).toBe("$12.34");
+    expect(loaded?.baseAmount.amount).toBe(1850);
+    expect(loaded?.baseAmount.currency).toBe("JPY");
+  });
+
   test("saveMany persists a whole batch", async () => {
     const repo = new SqliteTransactionRepository(db);
     await repo.saveMany([

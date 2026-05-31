@@ -18,6 +18,12 @@ export interface TransactionProps {
   readonly category?: KakeiboCategory | undefined;
   readonly occurredAt: Date;
   readonly note: string;
+  /**
+   * The amount converted to the app's base currency at booking time. Defaults
+   * to `amount` (i.e. the transaction is already in the base currency / rate 1).
+   * Aggregations sum this so mixed-currency months total correctly.
+   */
+  readonly baseAmount?: Money | undefined;
 }
 
 /**
@@ -35,10 +41,15 @@ export class Transaction {
   readonly category: KakeiboCategory | undefined;
   readonly occurredAt: Date;
   readonly note: string;
+  /** The amount expressed in the base currency (defaults to {@link amount}). */
+  readonly baseAmount: Money;
 
   constructor(props: TransactionProps) {
     if (!props.amount.isPositive()) {
       throw new BusinessRuleError("Transaction amount must be strictly positive");
+    }
+    if (props.baseAmount !== undefined && !props.baseAmount.isPositive()) {
+      throw new BusinessRuleError("Transaction base amount must be strictly positive");
     }
     if (props.type === TransactionType.EXPENSE && props.category === undefined) {
       throw new BusinessRuleError("An expense must be assigned to a kakeibo category");
@@ -56,6 +67,7 @@ export class Transaction {
     this.category = props.category;
     this.occurredAt = props.occurredAt;
     this.note = props.note;
+    this.baseAmount = props.baseAmount ?? props.amount;
     Object.freeze(this);
   }
 
@@ -75,5 +87,10 @@ export class Transaction {
    */
   signedAmount(): Money {
     return this.isIncome() ? this.amount : this.amount.multiply(-1);
+  }
+
+  /** Like {@link signedAmount} but in the base currency. */
+  signedBaseAmount(): Money {
+    return this.isIncome() ? this.baseAmount : this.baseAmount.multiply(-1);
   }
 }
