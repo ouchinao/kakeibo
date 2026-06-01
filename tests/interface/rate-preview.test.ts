@@ -3,6 +3,7 @@ import {
   convertMinor,
   convertToBaseMinor,
   formatMoney,
+  formatRate,
   ratePlausible,
 } from "../../src/interface/web/currency-format.js";
 
@@ -47,6 +48,24 @@ describe("convertMinor (base -> display currency, for read-only totals)", () => 
     expect(convertMinor(NaN, 0, 150, 2)).toBeNull();
     expect(convertMinor(1000, 0, 0, 2)).toBeNull();
     expect(convertMinor(1000, 0, -1, 2)).toBeNull();
+  });
+});
+
+describe("formatRate (compact rate for display, no spurious float digits)", () => {
+  test("trims a long fractional rate to a sensible precision", () => {
+    expect(formatRate(0.0066845678)).toBe("0.0066846");
+  });
+
+  test("leaves a whole-number rate clean", () => {
+    expect(formatRate(150)).toBe("150");
+  });
+
+  test("keeps an ordinary few-decimal rate intact", () => {
+    expect(formatRate(1.08)).toBe("1.08");
+  });
+
+  test("returns an empty string for a non-finite rate", () => {
+    expect(formatRate(NaN)).toBe("");
   });
 });
 
