@@ -1,10 +1,10 @@
-import { type KakeiboCategory } from "../../domain/category.ts";
+import type { KakeiboCategory } from "../../domain/category.ts";
 import { ExchangeRate } from "../../domain/exchange-rate.ts";
 import { Money } from "../../domain/money.ts";
 import { RecurringExpense } from "../../domain/recurring-expense.ts";
 import { ApplicationError } from "../errors.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import { type RecurringExpenseRepository } from "../ports/recurring-repositories.ts";
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type { RecurringExpenseRepository } from "../ports/recurring-repositories.ts";
 
 export interface CreateRecurringExpenseCommand {
   readonly name: string;
@@ -40,7 +40,9 @@ export class CreateRecurringExpense {
           `A rate to ${this.baseCurrency} is required for ${amount.currency} recurring expenses`,
         );
       }
-      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(amount);
+      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(
+        amount,
+      );
     }
 
     const recurring = new RecurringExpense({

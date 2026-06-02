@@ -1,12 +1,12 @@
-import { type MonthlyPlan } from "../../domain/monthly-plan.ts";
-import { type Reflection } from "../../domain/reflection.ts";
-import { type Transaction } from "../../domain/transaction.ts";
-import { type YearMonth } from "../../domain/year-month.ts";
-import {
-  type MonthlyPlanRepository,
-  type ReflectionRepository,
-  type TransactionRepository,
+import type {
+  MonthlyPlanRepository,
+  ReflectionRepository,
+  TransactionRepository,
 } from "../../application/ports/repositories.ts";
+import type { MonthlyPlan } from "../../domain/monthly-plan.ts";
+import type { Reflection } from "../../domain/reflection.ts";
+import type { Transaction } from "../../domain/transaction.ts";
+import type { YearMonth } from "../../domain/year-month.ts";
 
 /**
  * In-memory {@link TransactionRepository}.

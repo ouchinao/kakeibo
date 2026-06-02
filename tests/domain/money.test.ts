@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { Money } from "../../src/domain/money.ts";
 import { CurrencyMismatchError, InvalidValueError } from "../../src/domain/errors.ts";
+import { Money } from "../../src/domain/money.ts";
 
 describe("Money", () => {
   describe("construction", () => {

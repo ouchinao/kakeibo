@@ -1,7 +1,7 @@
-import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
 
 const INDEX_HTML = join(
   dirname(fileURLToPath(import.meta.url)),

@@ -1,11 +1,11 @@
-import { type KakeiboCategory } from "../../domain/category.ts";
+import type { KakeiboCategory } from "../../domain/category.ts";
 import { ExchangeRate } from "../../domain/exchange-rate.ts";
 import { Money } from "../../domain/money.ts";
 import { Transaction, type TransactionType } from "../../domain/transaction.ts";
 import { ApplicationError } from "../errors.ts";
-import { type Clock } from "../ports/clock.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import { type TransactionRepository } from "../ports/repositories.ts";
+import type { Clock } from "../ports/clock.ts";
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type { TransactionRepository } from "../ports/repositories.ts";
 
 export interface RecordTransactionCommand {
   readonly type: TransactionType;
@@ -52,7 +52,9 @@ export class RecordTransaction {
           `A rate to ${this.baseCurrency} is required for ${amount.currency} transactions`,
         );
       }
-      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(amount);
+      baseAmount = ExchangeRate.of(amount.currency, this.baseCurrency, command.rate).convert(
+        amount,
+      );
     }
 
     const transaction = new Transaction({

@@ -243,7 +243,7 @@ export function translate(lang, key, vars = {}) {
   const table = translations[lang] ?? translations[DEFAULT_LANGUAGE];
   const template = table[key] ?? translations[DEFAULT_LANGUAGE][key] ?? key;
   return template.replace(/\{(\w+)\}/g, (match, name) =>
-    Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : match,
+    Object.hasOwn(vars, name) ? String(vars[name]) : match,
   );
 }
 

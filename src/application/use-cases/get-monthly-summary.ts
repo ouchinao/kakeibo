@@ -1,9 +1,6 @@
 import { buildMonthlySummary, type MonthlySummary } from "../../domain/monthly-summary.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import {
-  type MonthlyPlanRepository,
-  type TransactionRepository,
-} from "../ports/repositories.ts";
+import type { MonthlyPlanRepository, TransactionRepository } from "../ports/repositories.ts";
 
 /**
  * Assembles the {@link MonthlySummary} read model for a month by gathering its

@@ -28,7 +28,6 @@ function main(): void {
     fetch: app.fetch,
   });
 
-  // eslint-disable-next-line no-console
   console.log(`Kakeibo Engine listening on http://${server.hostname}:${server.port}`);
 
   const shutdown = (): void => {

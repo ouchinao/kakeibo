@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import type { ExchangeRateProvider } from "../../src/application/ports/exchange-rate-provider.ts";
 import { type App, createApp } from "../../src/composition.ts";
-import { type ExchangeRateProvider } from "../../src/application/ports/exchange-rate-provider.ts";
 
 let app: App;
 
@@ -18,9 +18,7 @@ afterEach(() => {
   app.close();
 });
 
-const get = (path: string): Promise<Response> =>
-  app.fetch(new Request(`http://test.local${path}`));
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const get = (path: string): Promise<Response> => app.fetch(new Request(`http://test.local${path}`));
 const readJson = (res: Response): Promise<any> => res.json() as Promise<any>;
 
 describe("Exchange-rate API", () => {

@@ -11,7 +11,6 @@ afterEach(() => {
   app.close();
 });
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function request(method: string, path: string, body?: unknown): Promise<Response> {
   return app.fetch(
     new Request(`http://test.local${path}`, {

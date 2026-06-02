@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { ImportTransactions } from "../../src/application/use-cases/import-transactions.ts";
 import { KakeiboCategory } from "../../src/domain/category.ts";
 import { BusinessRuleError } from "../../src/domain/errors.ts";
 import { TransactionType } from "../../src/domain/transaction.ts";
 import { YearMonth } from "../../src/domain/year-month.ts";
-import { ImportTransactions } from "../../src/application/use-cases/import-transactions.ts";
 import { InMemoryTransactionRepository } from "../../src/infrastructure/persistence/in-memory-repositories.ts";
 import { FixedClock, SequentialIdGenerator } from "../support/fakes.ts";
 

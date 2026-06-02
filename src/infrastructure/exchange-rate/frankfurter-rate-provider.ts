@@ -1,6 +1,6 @@
-import {
-  type ExchangeRateProvider,
-  type ExchangeRateQuote,
+import type {
+  ExchangeRateProvider,
+  ExchangeRateQuote,
 } from "../../application/ports/exchange-rate-provider.ts";
 
 /** The subset of the global `fetch` signature this adapter relies on. */

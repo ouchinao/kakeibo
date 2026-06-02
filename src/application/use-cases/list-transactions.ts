@@ -1,6 +1,6 @@
-import { type Transaction } from "../../domain/transaction.ts";
+import type { Transaction } from "../../domain/transaction.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type TransactionRepository } from "../ports/repositories.ts";
+import type { TransactionRepository } from "../ports/repositories.ts";
 
 /**
  * Lists every transaction recorded in a given month, most recent first.

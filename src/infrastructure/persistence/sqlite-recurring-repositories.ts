@@ -1,12 +1,12 @@
-import { type Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
+import type {
+  RecurringExpenseRepository,
+  RecurringPostingLog,
+} from "../../application/ports/recurring-repositories.ts";
 import { toKakeiboCategory } from "../../domain/category.ts";
 import { Money } from "../../domain/money.ts";
 import { RecurringExpense } from "../../domain/recurring-expense.ts";
-import { type YearMonth } from "../../domain/year-month.ts";
-import {
-  type RecurringExpenseRepository,
-  type RecurringPostingLog,
-} from "../../application/ports/recurring-repositories.ts";
+import type { YearMonth } from "../../domain/year-month.ts";
 
 interface RecurringRow {
   id: string;
@@ -78,9 +78,7 @@ export class SqliteRecurringExpenseRepository implements RecurringExpenseReposit
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = this.db
-      .query("DELETE FROM recurring_expenses WHERE id = $id")
-      .run({ $id: id });
+    const result = this.db.query("DELETE FROM recurring_expenses WHERE id = $id").run({ $id: id });
     return result.changes > 0;
   }
 }
@@ -91,9 +89,7 @@ export class SqliteRecurringPostingLog implements RecurringPostingLog {
 
   async isPosted(recurringId: string, month: YearMonth): Promise<boolean> {
     const row = this.db
-      .query(
-        "SELECT 1 FROM recurring_postings WHERE recurring_id = $id AND month = $month",
-      )
+      .query("SELECT 1 FROM recurring_postings WHERE recurring_id = $id AND month = $month")
       .get({ $id: recurringId, $month: month.toString() });
     return row !== null;
   }

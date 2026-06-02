@@ -1,5 +1,5 @@
 import { NotFoundError } from "../errors.ts";
-import { type TransactionRepository } from "../ports/repositories.ts";
+import type { TransactionRepository } from "../ports/repositories.ts";
 
 /**
  * Deletes a transaction by id.

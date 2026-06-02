@@ -1,8 +1,8 @@
 import { ALL_CATEGORIES, type KakeiboCategory } from "./category.ts";
 import { Money } from "./money.ts";
-import { type MonthlyPlan } from "./monthly-plan.ts";
-import { Transaction } from "./transaction.ts";
-import { type YearMonth } from "./year-month.ts";
+import type { MonthlyPlan } from "./monthly-plan.ts";
+import type { Transaction } from "./transaction.ts";
+import type { YearMonth } from "./year-month.ts";
 
 /** Spending picture for a single kakeibo category within a month. */
 export interface CategoryBreakdown {

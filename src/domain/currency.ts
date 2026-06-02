@@ -31,7 +31,7 @@ const CURRENCIES: Readonly<Record<string, CurrencyDefinition>> = {
 
 /** Returns true when the given code is a supported currency. */
 export function isSupportedCurrency(code: string): boolean {
-  return Object.prototype.hasOwnProperty.call(CURRENCIES, code);
+  return Object.hasOwn(CURRENCIES, code);
 }
 
 /**

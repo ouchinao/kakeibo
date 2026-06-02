@@ -1,5 +1,5 @@
-import { type Clock } from "../../src/application/ports/clock.ts";
-import { type IdGenerator } from "../../src/application/ports/id-generator.ts";
+import type { Clock } from "../../src/application/ports/clock.ts";
+import type { IdGenerator } from "../../src/application/ports/id-generator.ts";
 
 /** Deterministic {@link Clock} for tests; time can be advanced manually. */
 export class FixedClock implements Clock {

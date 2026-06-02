@@ -1,9 +1,9 @@
-import { type Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
+import type { MonthlyPlanRepository } from "../../application/ports/repositories.ts";
 import { type KakeiboCategory, toKakeiboCategory } from "../../domain/category.ts";
 import { Money } from "../../domain/money.ts";
 import { MonthlyPlan } from "../../domain/monthly-plan.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type MonthlyPlanRepository } from "../../application/ports/repositories.ts";
 
 interface PlanRow {
   month: string;

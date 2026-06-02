@@ -1,8 +1,8 @@
 import { Money } from "./money.ts";
-import { type MonthlyPlan } from "./monthly-plan.ts";
-import { type RecurringExpense } from "./recurring-expense.ts";
-import { type Transaction } from "./transaction.ts";
-import { type YearMonth } from "./year-month.ts";
+import type { MonthlyPlan } from "./monthly-plan.ts";
+import type { RecurringExpense } from "./recurring-expense.ts";
+import type { Transaction } from "./transaction.ts";
+import type { YearMonth } from "./year-month.ts";
 
 export interface MonthlyForecastInput {
   readonly month: YearMonth;
@@ -67,11 +67,7 @@ export function buildMonthlyForecast(input: MonthlyForecastInput): MonthlyForeca
   for (const recurring of recurringExpenses) {
     // Project each recurring expense via its base-currency equivalent, so
     // foreign-currency expenses are included at their booking-time rate.
-    if (
-      recurring.active &&
-      !isPosted(recurring.id) &&
-      recurring.baseAmount.currency === currency
-    ) {
+    if (recurring.active && !isPosted(recurring.id) && recurring.baseAmount.currency === currency) {
       recurringRemaining = recurringRemaining.add(recurring.baseAmount);
     }
   }

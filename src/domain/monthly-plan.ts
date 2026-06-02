@@ -1,7 +1,7 @@
 import { ALL_CATEGORIES, type KakeiboCategory } from "./category.ts";
 import { BusinessRuleError, CurrencyMismatchError } from "./errors.ts";
 import { Money } from "./money.ts";
-import { type YearMonth } from "./year-month.ts";
+import type { YearMonth } from "./year-month.ts";
 
 export interface MonthlyPlanProps {
   readonly id: string;

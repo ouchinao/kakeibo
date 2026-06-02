@@ -1,8 +1,7 @@
-import { type Database } from "bun:sqlite";
-import { fileURLToPath } from "node:url";
+import type { Database } from "bun:sqlite";
 import { dirname, join } from "node:path";
-import { getCurrency } from "./domain/currency.ts";
-import { type ExchangeRateProvider } from "./application/ports/exchange-rate-provider.ts";
+import { fileURLToPath } from "node:url";
+import type { ExchangeRateProvider } from "./application/ports/exchange-rate-provider.ts";
 import { CreateRecurringExpense } from "./application/use-cases/create-recurring-expense.ts";
 import { DeleteRecurringExpense } from "./application/use-cases/delete-recurring-expense.ts";
 import { DeleteTransaction } from "./application/use-cases/delete-transaction.ts";
@@ -19,15 +18,16 @@ import { PostRecurringExpenses } from "./application/use-cases/post-recurring-ex
 import { RecordTransaction } from "./application/use-cases/record-transaction.ts";
 import { SaveMonthlyPlan } from "./application/use-cases/save-monthly-plan.ts";
 import { SaveReflection } from "./application/use-cases/save-reflection.ts";
+import { getCurrency } from "./domain/currency.ts";
+import { FrankfurterRateProvider } from "./infrastructure/exchange-rate/frankfurter-rate-provider.ts";
 import { openDatabase } from "./infrastructure/persistence/database.ts";
+import { SqliteMonthlyPlanRepository } from "./infrastructure/persistence/sqlite-monthly-plan-repository.ts";
 import {
   SqliteRecurringExpenseRepository,
   SqliteRecurringPostingLog,
 } from "./infrastructure/persistence/sqlite-recurring-repositories.ts";
-import { SqliteMonthlyPlanRepository } from "./infrastructure/persistence/sqlite-monthly-plan-repository.ts";
 import { SqliteReflectionRepository } from "./infrastructure/persistence/sqlite-reflection-repository.ts";
 import { SqliteTransactionRepository } from "./infrastructure/persistence/sqlite-transaction-repository.ts";
-import { FrankfurterRateProvider } from "./infrastructure/exchange-rate/frankfurter-rate-provider.ts";
 import { SystemClock } from "./infrastructure/system/system-clock.ts";
 import { UuidIdGenerator } from "./infrastructure/system/uuid-id-generator.ts";
 import { createRouter } from "./interface/http/router.ts";
@@ -88,7 +88,13 @@ export function createApp(config: AppConfig): App {
     listRecurringExpenses: new ListRecurringExpenses(recurring),
     deleteRecurringExpense: new DeleteRecurringExpense(recurring),
     postRecurringExpenses: new PostRecurringExpenses(recurring, postingLog, transactions, ids),
-    getForecast: new GetForecast(transactions, plans, recurring, postingLog, config.defaultCurrency),
+    getForecast: new GetForecast(
+      transactions,
+      plans,
+      recurring,
+      postingLog,
+      config.defaultCurrency,
+    ),
     getTrend: new GetTrend(transactions, plans, config.defaultCurrency),
     getExchangeRate: new GetExchangeRate(rateProvider),
     importTransactions: new ImportTransactions(transactions, ids, clock),

@@ -1,11 +1,8 @@
 import { buildMonthlySummary } from "../../domain/monthly-summary.ts";
-import { type TrendPoint } from "../../domain/trend-point.ts";
+import type { TrendPoint } from "../../domain/trend-point.ts";
 import { YearMonth } from "../../domain/year-month.ts";
 import { ApplicationError } from "../errors.ts";
-import {
-  type MonthlyPlanRepository,
-  type TransactionRepository,
-} from "../ports/repositories.ts";
+import type { MonthlyPlanRepository, TransactionRepository } from "../ports/repositories.ts";
 
 const MAX_MONTHS = 24;
 

@@ -1,11 +1,11 @@
-import { type Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
+import type { ReflectionRepository } from "../../application/ports/repositories.ts";
 import {
+  REFLECTION_QUESTIONS,
   Reflection,
   type ReflectionQuestionKey,
-  REFLECTION_QUESTIONS,
 } from "../../domain/reflection.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type ReflectionRepository } from "../../application/ports/repositories.ts";
 
 interface ReflectionRow {
   month: string;

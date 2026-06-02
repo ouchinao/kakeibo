@@ -1,5 +1,5 @@
 import { getCurrency } from "../../domain/currency.ts";
-import { type ExchangeRateProvider } from "../ports/exchange-rate-provider.ts";
+import type { ExchangeRateProvider } from "../ports/exchange-rate-provider.ts";
 
 /**
  * The resolved rate offered to the client. `rate` is `null` when no rate could

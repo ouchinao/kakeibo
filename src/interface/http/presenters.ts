@@ -1,12 +1,12 @@
-import { type CurrencyDefinition } from "../../domain/currency.ts";
-import { type Money } from "../../domain/money.ts";
-import { type MonthlyForecast } from "../../domain/monthly-forecast.ts";
-import { type MonthlyPlan } from "../../domain/monthly-plan.ts";
-import { type MonthlySummary } from "../../domain/monthly-summary.ts";
-import { type RecurringExpense } from "../../domain/recurring-expense.ts";
+import type { CurrencyDefinition } from "../../domain/currency.ts";
+import type { Money } from "../../domain/money.ts";
+import type { MonthlyForecast } from "../../domain/monthly-forecast.ts";
+import type { MonthlyPlan } from "../../domain/monthly-plan.ts";
+import type { MonthlySummary } from "../../domain/monthly-summary.ts";
+import type { RecurringExpense } from "../../domain/recurring-expense.ts";
 import { REFLECTION_QUESTIONS, type Reflection } from "../../domain/reflection.ts";
-import { type Transaction } from "../../domain/transaction.ts";
-import { type TrendPoint } from "../../domain/trend-point.ts";
+import type { Transaction } from "../../domain/transaction.ts";
+import type { TrendPoint } from "../../domain/trend-point.ts";
 
 /**
  * Presenters map domain objects to plain, JSON-serialisable DTOs.

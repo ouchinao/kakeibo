@@ -1,6 +1,6 @@
-import { type KakeiboCategory } from "./category.ts";
+import type { KakeiboCategory } from "./category.ts";
 import { BusinessRuleError, InvalidValueError } from "./errors.ts";
-import { Money } from "./money.ts";
+import type { Money } from "./money.ts";
 
 /** Whether money flows in (income) or out (expense). */
 export const TransactionType = {

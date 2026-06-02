@@ -1,9 +1,9 @@
-import { type KakeiboCategory } from "../../domain/category.ts";
+import type { KakeiboCategory } from "../../domain/category.ts";
 import { Money } from "../../domain/money.ts";
 import { Transaction, type TransactionType } from "../../domain/transaction.ts";
-import { type Clock } from "../ports/clock.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import { type TransactionRepository } from "../ports/repositories.ts";
+import type { Clock } from "../ports/clock.ts";
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type { TransactionRepository } from "../ports/repositories.ts";
 
 /** A single transaction to import (amounts already in minor units). */
 export interface ImportTransactionRecord {

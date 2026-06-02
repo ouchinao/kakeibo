@@ -1,4 +1,4 @@
-import { type YearMonth } from "./year-month.ts";
+import type { YearMonth } from "./year-month.ts";
 
 /**
  * The four reflective questions that close every kakeibo cycle.

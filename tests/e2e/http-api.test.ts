@@ -22,7 +22,6 @@ async function request(method: string, path: string, body?: unknown): Promise<Re
   );
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /** Parses a response body as loosely-typed JSON for assertions. */
 function readJson(res: Response): Promise<any> {
   return res.json() as Promise<any>;

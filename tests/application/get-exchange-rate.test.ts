@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { InvalidValueError } from "../../src/domain/errors.ts";
+import type { ExchangeRateProvider } from "../../src/application/ports/exchange-rate-provider.ts";
 import { GetExchangeRate } from "../../src/application/use-cases/get-exchange-rate.ts";
-import { type ExchangeRateProvider } from "../../src/application/ports/exchange-rate-provider.ts";
+import { InvalidValueError } from "../../src/domain/errors.ts";
 
 function providerReturning(rate: number | null): ExchangeRateProvider {
   return {

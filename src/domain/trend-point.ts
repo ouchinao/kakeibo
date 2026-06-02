@@ -1,5 +1,5 @@
-import { type Money } from "./money.ts";
-import { type YearMonth } from "./year-month.ts";
+import type { Money } from "./money.ts";
+import type { YearMonth } from "./year-month.ts";
 
 /**
  * Key figures for a single month in a trend series.

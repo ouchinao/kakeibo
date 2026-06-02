@@ -1,6 +1,6 @@
-import { type Reflection } from "../../domain/reflection.ts";
+import type { Reflection } from "../../domain/reflection.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type ReflectionRepository } from "../ports/repositories.ts";
+import type { ReflectionRepository } from "../ports/repositories.ts";
 
 /** Fetches the reflection for a month, or null when none exists yet. */
 export class GetReflection {

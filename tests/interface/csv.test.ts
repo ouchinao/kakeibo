@@ -3,11 +3,16 @@ import { parseCsv, stringifyCsv } from "../../src/interface/http/csv.ts";
 
 describe("CSV utilities", () => {
   test("stringifies plain rows", () => {
-    expect(stringifyCsv([["a", "b"], ["1", "2"]])).toBe("a,b\r\n1,2");
+    expect(
+      stringifyCsv([
+        ["a", "b"],
+        ["1", "2"],
+      ]),
+    ).toBe("a,b\r\n1,2");
   });
 
   test("quotes fields containing commas, quotes, and newlines", () => {
-    const out = stringifyCsv([["he said \"hi\"", "a,b", "line1\nline2"]]);
+    const out = stringifyCsv([['he said "hi"', "a,b", "line1\nline2"]]);
     expect(out).toBe('"he said ""hi""","a,b","line1\nline2"');
   });
 

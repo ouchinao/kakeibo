@@ -1,11 +1,11 @@
 import {
+  REFLECTION_QUESTIONS,
   Reflection,
   type ReflectionQuestionKey,
-  REFLECTION_QUESTIONS,
 } from "../../domain/reflection.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import { type ReflectionRepository } from "../ports/repositories.ts";
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type { ReflectionRepository } from "../ports/repositories.ts";
 
 export interface SaveReflectionCommand {
   readonly month: string | YearMonth;

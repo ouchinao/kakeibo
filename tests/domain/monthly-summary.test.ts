@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { KakeiboCategory } from "../../src/domain/category.ts";
 import { Money } from "../../src/domain/money.ts";
-import { buildMonthlySummary } from "../../src/domain/monthly-summary.ts";
 import { MonthlyPlan } from "../../src/domain/monthly-plan.ts";
+import { buildMonthlySummary } from "../../src/domain/monthly-summary.ts";
 import { Transaction, TransactionType } from "../../src/domain/transaction.ts";
 import { YearMonth } from "../../src/domain/year-month.ts";
 

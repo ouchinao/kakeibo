@@ -1,11 +1,11 @@
-import { type KakeiboCategory } from "../../domain/category.ts";
+import type { KakeiboCategory } from "../../domain/category.ts";
 import { ExchangeRate } from "../../domain/exchange-rate.ts";
 import { Money } from "../../domain/money.ts";
 import { MonthlyPlan } from "../../domain/monthly-plan.ts";
 import { YearMonth } from "../../domain/year-month.ts";
 import { ApplicationError } from "../errors.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import { type MonthlyPlanRepository } from "../ports/repositories.ts";
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type { MonthlyPlanRepository } from "../ports/repositories.ts";
 
 export interface SaveMonthlyPlanCommand {
   readonly month: string | YearMonth;
