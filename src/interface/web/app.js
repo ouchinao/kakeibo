@@ -83,8 +83,15 @@ const t = (key, vars) => translate(currentLang, key, vars);
 const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
-/** Today's date as YYYY-MM-DD (used to default the transaction date field). */
-const todayIso = () => new Date().toISOString().slice(0, 10);
+/**
+ * The user's *local* today as YYYY-MM-DD (used to default the transaction date).
+ * Built from the local calendar date, not UTC, so it never shows "yesterday"
+ * for users ahead of UTC in their local morning.
+ */
+const todayIso = () => {
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+};
 
 /**
  * Thin fetch wrapper that surfaces API error envelopes as thrown errors.
