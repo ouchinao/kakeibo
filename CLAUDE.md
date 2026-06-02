@@ -13,11 +13,18 @@ bank sync, **no paid API keys**. Data lives in a local SQLite file.
 
 - `bun test` — full test suite (`bun:test`).
 - `bun run typecheck` — `tsc --noEmit`.
+- `bun run check` — **Biome** lint + format check (no writes).
+- `bun run lint` / `bun run format` — Biome lint only / auto-format (writes).
 - `bun run dev` — server with hot reload (http://localhost:3000).
 - `bun run start` — server.
 
-CI (`.github/workflows/ci.yml`) runs a single **"Type-check & test"** job:
-`bun run typecheck` + `bun test`. **Both must be green** — they are the merge gate.
+**Tooling**: **Biome** is the linter + formatter (`biome.json`): 2-space, 100-col,
+double quotes, semicolons, trailing commas; recommended lint rules (`noExplicitAny`
+relaxed under `tests/**`). Run `bun run format` before committing.
+
+CI (`.github/workflows/ci.yml`) is a single **"Type-check & test"** job that runs
+**`biome ci`** + `bun run typecheck` + `bun test`. **All must be green** — they are
+the merge gate.
 
 ## Architecture (dependencies point inward)
 
@@ -88,6 +95,7 @@ composition.ts   the only place concretes are wired (composition root)
   domain/application/e2e levels; UI/CSS changes are verified by review + the axe /
   i18n-parity tests staying green.
 - Comments, code, and README are **in English**. Conventional-commit-style messages.
+- Run **`bun run format`** (Biome) before committing; CI fails on lint/format drift.
 - **Secrets**: no paid keys. Any free key would go in `.env` (git-ignored); none
   are needed today.
 
