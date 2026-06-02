@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createStaticHandler } from "../../src/interface/http/static.ts";
 
 const WEB_ROOT = join(

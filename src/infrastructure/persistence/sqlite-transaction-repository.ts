@@ -1,9 +1,9 @@
-import { type Database } from "bun:sqlite";
+import type { Database } from "bun:sqlite";
+import type { TransactionRepository } from "../../application/ports/repositories.ts";
 import { type KakeiboCategory, toKakeiboCategory } from "../../domain/category.ts";
 import { Money } from "../../domain/money.ts";
 import { Transaction, type TransactionType } from "../../domain/transaction.ts";
-import { type YearMonth } from "../../domain/year-month.ts";
-import { type TransactionRepository } from "../../application/ports/repositories.ts";
+import type { YearMonth } from "../../domain/year-month.ts";
 
 interface TransactionRow {
   id: string;
@@ -50,8 +50,10 @@ function toParams(transaction: Transaction): Record<string, string | number | nu
   };
 }
 
-const COLUMNS = "(id, type, amount_minor, currency, category, occurred_at, note, base_amount_minor, base_currency)";
-const VALUES = "($id, $type, $amount, $currency, $category, $occurredAt, $note, $baseAmount, $baseCurrency)";
+const COLUMNS =
+  "(id, type, amount_minor, currency, category, occurred_at, note, base_amount_minor, base_currency)";
+const VALUES =
+  "($id, $type, $amount, $currency, $category, $occurredAt, $note, $baseAmount, $baseCurrency)";
 const INSERT_OR_REPLACE_SQL = `INSERT OR REPLACE INTO transactions ${COLUMNS} VALUES ${VALUES}`;
 const INSERT_SQL = `INSERT INTO transactions ${COLUMNS} VALUES ${VALUES}`;
 

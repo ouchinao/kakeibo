@@ -16,12 +16,14 @@ describe("ExchangeRate", () => {
       expect(() => ExchangeRate.of("USD", "XYZ", 1)).toThrow(InvalidValueError);
     });
 
-    test.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
-      "rejects a non-positive/!finite rate: %p",
-      (bad) => {
-        expect(() => ExchangeRate.of("USD", "JPY", bad)).toThrow(InvalidValueError);
-      },
-    );
+    test.each([
+      0,
+      -1,
+      Number.NaN,
+      Number.POSITIVE_INFINITY,
+    ])("rejects a non-positive/!finite rate: %p", (bad) => {
+      expect(() => ExchangeRate.of("USD", "JPY", bad)).toThrow(InvalidValueError);
+    });
 
     test("identity is a rate of 1 within one currency", () => {
       const id = ExchangeRate.identity("USD");

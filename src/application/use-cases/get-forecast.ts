@@ -1,13 +1,10 @@
 import { buildMonthlyForecast, type MonthlyForecast } from "../../domain/monthly-forecast.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import {
-  type RecurringExpenseRepository,
-  type RecurringPostingLog,
+import type {
+  RecurringExpenseRepository,
+  RecurringPostingLog,
 } from "../ports/recurring-repositories.ts";
-import {
-  type MonthlyPlanRepository,
-  type TransactionRepository,
-} from "../ports/repositories.ts";
+import type { MonthlyPlanRepository, TransactionRepository } from "../ports/repositories.ts";
 
 /**
  * Produces the end-of-month balance forecast for a month by gathering its

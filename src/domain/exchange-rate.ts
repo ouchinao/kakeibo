@@ -29,7 +29,9 @@ export class ExchangeRate {
     const fromDef = getCurrency(from);
     const toDef = getCurrency(to);
     if (!Number.isFinite(rate) || rate <= 0) {
-      throw new InvalidValueError(`Exchange rate must be a positive finite number, received: ${rate}`);
+      throw new InvalidValueError(
+        `Exchange rate must be a positive finite number, received: ${rate}`,
+      );
     }
     return new ExchangeRate(fromDef.code, toDef.code, rate);
   }

@@ -1,6 +1,6 @@
-import { type MonthlyPlan } from "../../domain/monthly-plan.ts";
+import type { MonthlyPlan } from "../../domain/monthly-plan.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type MonthlyPlanRepository } from "../ports/repositories.ts";
+import type { MonthlyPlanRepository } from "../ports/repositories.ts";
 
 /** Fetches the plan for a month, or null when none has been created yet. */
 export class GetMonthlyPlan {

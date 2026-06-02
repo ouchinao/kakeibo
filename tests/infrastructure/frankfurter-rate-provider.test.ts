@@ -16,14 +16,22 @@ describe("FrankfurterRateProvider", () => {
       fakeFetch({ amount: 1, base: "USD", date: "2026-05-29", rates: { JPY: 150.42 } }),
     );
     const quote = await provider.getLatestRate("USD", "JPY");
-    expect(quote).toEqual({ from: "USD", to: "JPY", rate: 150.42, asOf: "2026-05-29", source: "frankfurter" });
+    expect(quote).toEqual({
+      from: "USD",
+      to: "JPY",
+      rate: 150.42,
+      asOf: "2026-05-29",
+      source: "frankfurter",
+    });
   });
 
   test("requests the right currencies", async () => {
     let seenUrl = "";
     const spy = (async (input: string | URL | Request) => {
       seenUrl = String(input);
-      return new Response(JSON.stringify({ date: "2026-05-29", rates: { JPY: 150 } }), { status: 200 });
+      return new Response(JSON.stringify({ date: "2026-05-29", rates: { JPY: 150 } }), {
+        status: 200,
+      });
     }) as unknown as typeof fetch;
     const provider = new FrankfurterRateProvider(spy, "https://example.test");
     await provider.getLatestRate("USD", "JPY");

@@ -1,7 +1,7 @@
-import { type KakeiboCategory } from "./category.ts";
+import type { KakeiboCategory } from "./category.ts";
 import { BusinessRuleError, InvalidValueError } from "./errors.ts";
-import { Money } from "./money.ts";
-import { type YearMonth } from "./year-month.ts";
+import type { Money } from "./money.ts";
+import type { YearMonth } from "./year-month.ts";
 
 export interface RecurringExpenseProps {
   readonly id: string;

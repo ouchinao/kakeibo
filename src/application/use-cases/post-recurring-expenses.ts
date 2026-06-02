@@ -1,11 +1,11 @@
 import { Transaction, TransactionType } from "../../domain/transaction.ts";
 import { YearMonth } from "../../domain/year-month.ts";
-import { type IdGenerator } from "../ports/id-generator.ts";
-import {
-  type RecurringExpenseRepository,
-  type RecurringPostingLog,
+import type { IdGenerator } from "../ports/id-generator.ts";
+import type {
+  RecurringExpenseRepository,
+  RecurringPostingLog,
 } from "../ports/recurring-repositories.ts";
-import { type TransactionRepository } from "../ports/repositories.ts";
+import type { TransactionRepository } from "../ports/repositories.ts";
 
 export interface PostRecurringResult {
   readonly posted: number;

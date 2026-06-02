@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { KakeiboCategory } from "../../src/domain/category.ts";
-import { TransactionType } from "../../src/domain/transaction.ts";
 import { ApplicationError } from "../../src/application/errors.ts";
 import { GetTrend } from "../../src/application/use-cases/get-trend.ts";
 import { RecordTransaction } from "../../src/application/use-cases/record-transaction.ts";
 import { SaveMonthlyPlan } from "../../src/application/use-cases/save-monthly-plan.ts";
+import { KakeiboCategory } from "../../src/domain/category.ts";
+import { TransactionType } from "../../src/domain/transaction.ts";
 import {
   InMemoryMonthlyPlanRepository,
   InMemoryTransactionRepository,
@@ -22,7 +22,12 @@ describe("GetTrend", () => {
     txRepo = new InMemoryTransactionRepository();
     planRepo = new InMemoryMonthlyPlanRepository();
     const ids = new SequentialIdGenerator();
-    record = new RecordTransaction(txRepo, ids, new FixedClock(new Date("2026-05-15T00:00:00Z")), "JPY");
+    record = new RecordTransaction(
+      txRepo,
+      ids,
+      new FixedClock(new Date("2026-05-15T00:00:00Z")),
+      "JPY",
+    );
     savePlan = new SaveMonthlyPlan(planRepo, ids, "JPY");
     trend = new GetTrend(txRepo, planRepo, "JPY");
   });

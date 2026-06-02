@@ -28,10 +28,18 @@ export const recordTransactionSchema = z
   })
   .superRefine((value, ctx) => {
     if (value.type === TransactionType.EXPENSE && value.category === undefined) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Expenses require a category", path: ["category"] });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Expenses require a category",
+        path: ["category"],
+      });
     }
     if (value.type === TransactionType.INCOME && value.category !== undefined) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Income must not have a category", path: ["category"] });
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Income must not have a category",
+        path: ["category"],
+      });
     }
   });
 

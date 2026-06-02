@@ -141,7 +141,12 @@ function stat(label, value, mood) {
 function displayMoney(m) {
   if (!m) return "";
   if (displayCurrency === baseCurrency) return m.formatted;
-  const minor = convertMinor(m.minor, baseCurrencyInfo.minorUnits, displayRate, displayInfo.minorUnits);
+  const minor = convertMinor(
+    m.minor,
+    baseCurrencyInfo.minorUnits,
+    displayRate,
+    displayInfo.minorUnits,
+  );
   return minor === null ? m.formatted : formatMoney(minor, displayInfo);
 }
 
@@ -168,7 +173,11 @@ function renderSummary(summary) {
       const overClass = c.overBudget ? " over" : "";
       const budgetText =
         budget > 0
-          ? t("msg.budgetUsage", { spent: displayMoney(c.spent), budget: displayMoney(c.budget), pct })
+          ? t("msg.budgetUsage", {
+              spent: displayMoney(c.spent),
+              budget: displayMoney(c.budget),
+              pct,
+            })
           : t("msg.noBudget", { spent: displayMoney(c.spent) });
       return `
         <div class="cat-row">
@@ -263,7 +272,11 @@ function renderTrend(points) {
   const padBottom = 24;
   const chartH = H - padTop - padBottom;
 
-  const values = points.flatMap((p) => [p.totalIncome.minor, p.totalExpense.minor, p.actualSavings.minor]);
+  const values = points.flatMap((p) => [
+    p.totalIncome.minor,
+    p.totalExpense.minor,
+    p.actualSavings.minor,
+  ]);
   const max = Math.max(...values, 0);
   const min = Math.min(...values, 0);
   const range = max - min || 1;
@@ -336,8 +349,8 @@ async function refresh() {
   try {
     // Summary/forecast/trend aggregate in the base currency server-side, so no
     // display-currency parameter is sent.
-    const [summary, transactions, plan, reflection, forecast, recurring, trend] =
-      await Promise.all([
+    const [summary, transactions, plan, reflection, forecast, recurring, trend] = await Promise.all(
+      [
         api(`/api/summary?month=${month}`),
         api(`/api/transactions?month=${month}`),
         api(`/api/plans/${month}`).catch(() => null),
@@ -345,7 +358,8 @@ async function refresh() {
         api(`/api/forecast?month=${month}`),
         api(`/api/recurring`),
         api(`/api/trend?month=${month}&months=${els.trendRange.value}`),
-      ]);
+      ],
+    );
     renderSummary(summary);
     renderTransactions(transactions);
     renderPlan(plan);
@@ -535,7 +549,9 @@ async function loadCurrencies() {
   baseCurrency = base?.code ?? "JPY";
   baseCurrencyInfo = { minorUnits: base?.minorUnits ?? 0, symbol: base?.symbol ?? "¥" };
 
-  const options = currencies.map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`).join("");
+  const options = currencies
+    .map((c) => `<option value="${c.code}">${c.symbol} ${c.code}</option>`)
+    .join("");
   els.currency.innerHTML = options;
   els.displayCurrency.innerHTML = options;
 
@@ -554,7 +570,10 @@ async function loadCurrencies() {
 
 els.lang.addEventListener("change", () => setLanguage(els.lang.value));
 els.currency.addEventListener("change", () => setCurrency(els.currency.value));
-els.displayCurrency.addEventListener("change", () => void setDisplayCurrency(els.displayCurrency.value));
+els.displayCurrency.addEventListener(
+  "change",
+  () => void setDisplayCurrency(els.displayCurrency.value),
+);
 els.month.addEventListener("change", refresh);
 els.trendRange.addEventListener("change", refresh);
 els.txType.addEventListener("change", toggleCategoryField);

@@ -21,7 +21,6 @@ function send(method: string, path: string, body?: unknown): Promise<Response> {
   );
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const readJson = (res: Response): Promise<any> => res.json() as Promise<any>;
 
 async function addRent(): Promise<string> {

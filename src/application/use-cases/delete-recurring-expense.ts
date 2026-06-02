@@ -1,5 +1,5 @@
 import { NotFoundError } from "../errors.ts";
-import { type RecurringExpenseRepository } from "../ports/recurring-repositories.ts";
+import type { RecurringExpenseRepository } from "../ports/recurring-repositories.ts";
 
 /**
  * Deletes a recurring expense definition by id.

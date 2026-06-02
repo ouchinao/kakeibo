@@ -1,9 +1,9 @@
-import { type RecurringExpense } from "../../domain/recurring-expense.ts";
-import { type YearMonth } from "../../domain/year-month.ts";
-import {
-  type RecurringExpenseRepository,
-  type RecurringPostingLog,
+import type {
+  RecurringExpenseRepository,
+  RecurringPostingLog,
 } from "../../application/ports/recurring-repositories.ts";
+import type { RecurringExpense } from "../../domain/recurring-expense.ts";
+import type { YearMonth } from "../../domain/year-month.ts";
 
 /** In-memory {@link RecurringExpenseRepository}, preserving insertion order. */
 export class InMemoryRecurringExpenseRepository implements RecurringExpenseRepository {

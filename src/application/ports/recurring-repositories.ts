@@ -1,5 +1,5 @@
-import { type RecurringExpense } from "../../domain/recurring-expense.ts";
-import { type YearMonth } from "../../domain/year-month.ts";
+import type { RecurringExpense } from "../../domain/recurring-expense.ts";
+import type { YearMonth } from "../../domain/year-month.ts";
 
 /**
  * Persistence boundary for {@link RecurringExpense} definitions.

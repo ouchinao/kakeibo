@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { YearMonth } from "../../src/domain/year-month.ts";
 import { InvalidValueError } from "../../src/domain/errors.ts";
+import { YearMonth } from "../../src/domain/year-month.ts";
 
 describe("YearMonth", () => {
   test("parses a valid YYYY-MM string", () => {
