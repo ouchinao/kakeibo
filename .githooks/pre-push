@@ -1,0 +1,10 @@
+#!/bin/sh
+# Run the same gate as CI before pushing, so failures are caught locally:
+# Biome lint/format check, type-check, then the full test suite.
+set -e
+
+if [ -f biome.json ]; then
+  bunx biome ci ./src ./tests
+fi
+bun run typecheck
+bun test

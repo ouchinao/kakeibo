@@ -1,0 +1,10 @@
+#!/bin/sh
+# Auto-format staged source files with Biome before committing, then re-stage
+# whatever it changed. No-op until Biome is configured (biome.json present).
+[ -f biome.json ] || exit 0
+
+files=$(git diff --cached --name-only --diff-filter=ACM -- src tests | grep -E '\.(ts|js|json|html)$' || true)
+[ -z "$files" ] && exit 0
+
+echo "$files" | xargs bunx biome format --write
+echo "$files" | xargs git add
