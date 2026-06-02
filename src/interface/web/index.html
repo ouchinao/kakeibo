@@ -67,7 +67,7 @@
         padding: 9px 11px;
       }
       input, select, textarea { width: 100%; }
-      .field { flex: 1 1 130px; }
+      .field { flex: 1 1 130px; min-width: 0; }
       button {
         cursor: pointer;
         background: var(--accent);
@@ -116,6 +116,14 @@
         h1 { font-size: 1.35rem; }
         .split { grid-template-columns: 1fr; }
         .row { gap: 10px; }
+        /* Native date inputs are oversized on mobile; normalise them to match
+           the other boxes (the picker still opens on tap). Desktop keeps the
+           native control. */
+        input[type="date"] {
+          -webkit-appearance: none;
+          appearance: none;
+          min-width: 0;
+        }
       }
     </style>
   </head>
