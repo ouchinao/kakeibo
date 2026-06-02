@@ -24,6 +24,8 @@
         background: var(--bg);
         color: var(--text);
         line-height: 1.5;
+        /* Guard against a stray wide element shifting the page sideways. */
+        overflow-x: hidden;
       }
       header {
         padding: 24px 20px 8px;
@@ -116,10 +118,11 @@
         h1 { font-size: 1.35rem; }
         .split { grid-template-columns: 1fr; }
         .row { gap: 10px; }
-        /* Native date inputs are oversized on mobile; normalise them to match
-           the other boxes (the picker still opens on tap). Desktop keeps the
-           native control. */
-        input[type="date"] {
+        /* Native date/month inputs are oversized on mobile; normalise them to
+           match the other boxes (the picker still opens on tap). Desktop keeps
+           the native control. */
+        input[type="date"],
+        input[type="month"] {
           -webkit-appearance: none;
           appearance: none;
           min-width: 0;
