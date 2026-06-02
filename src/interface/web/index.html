@@ -40,6 +40,13 @@
       main { max-width: 980px; margin: 0 auto; padding: 12px 20px 64px; }
       .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
       .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+      /* A two-column split that collapses to one column on narrow screens. */
+      .split { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+      /* Lets a wide table scroll horizontally instead of forcing page overflow.
+         The min-width keeps columns readable so the wrapper actually scrolls on
+         narrow screens rather than letting the table squash to fit. */
+      .table-wrap { overflow-x: auto; }
+      .table-wrap table { min-width: 520px; }
       .card {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -102,6 +109,14 @@
       }
       .toast.show { opacity: 1; }
       .toast.error { border-color: var(--warn); color: var(--warn); }
+      /* Phone-width layout: stack two-column sections and tighten gutters. */
+      @media (max-width: 640px) {
+        header { padding: 16px 14px 6px; }
+        main { padding: 12px 14px 56px; }
+        h1 { font-size: 1.35rem; }
+        .split { grid-template-columns: 1fr; }
+        .row { gap: 10px; }
+      }
     </style>
   </head>
   <body>
@@ -155,7 +170,7 @@
         </div>
       </section>
 
-      <section class="grid" style="grid-template-columns: 1fr 1fr">
+      <section class="split">
         <div class="card">
           <h2 data-i18n="heading.forecast">Forecast</h2>
           <div id="forecast"><p class="muted">…</p></div>
@@ -193,7 +208,7 @@
         </div>
       </section>
 
-      <section class="grid" style="grid-template-columns: 1fr 1fr">
+      <section class="split">
         <div class="card">
           <h2 data-i18n="heading.addTransaction">Add transaction</h2>
           <form id="tx-form">
@@ -265,6 +280,7 @@
             <input type="file" id="import-input" accept=".csv,text/csv" data-i18n-aria-label="button.importCsv" aria-label="Import CSV" hidden />
           </div>
         </div>
+        <div class="table-wrap">
         <table style="margin-top: 12px">
           <thead><tr>
             <th data-i18n="table.date">Date</th>
@@ -276,11 +292,12 @@
           </tr></thead>
           <tbody id="tx-list"><tr><td colspan="6" class="muted">…</td></tr></tbody>
         </table>
+        </div>
       </section>
 
       <section class="card">
         <h2 data-i18n="heading.reflection">Month-end reflection</h2>
-        <form id="reflection-form" class="grid" style="grid-template-columns: 1fr 1fr"></form>
+        <form id="reflection-form" class="split"></form>
         <div style="margin-top: 12px"><button type="submit" form="reflection-form" class="ghost" data-i18n="button.saveReflection">Save reflection</button></div>
       </section>
     </main>
