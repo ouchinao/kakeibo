@@ -42,8 +42,11 @@
       .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
       /* A two-column split that collapses to one column on narrow screens. */
       .split { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
-      /* Lets a wide table scroll horizontally instead of forcing page overflow. */
+      /* Lets a wide table scroll horizontally instead of forcing page overflow.
+         The min-width keeps columns readable so the wrapper actually scrolls on
+         narrow screens rather than letting the table squash to fit. */
       .table-wrap { overflow-x: auto; }
+      .table-wrap table { min-width: 520px; }
       .card {
         background: var(--panel);
         border: 1px solid var(--line);
