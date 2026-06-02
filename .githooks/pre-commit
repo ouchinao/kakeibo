@@ -1,9 +1,11 @@
 #!/bin/sh
 # Auto-format staged source files with Biome before committing, then re-stage
 # whatever it changed. No-op until Biome is configured (biome.json present).
+# Only file types Biome's formatter handles (TS/JS/JSON) — HTML is excluded
+# because `biome format` ignores it (HTML is still linted by `biome ci`).
 [ -f biome.json ] || exit 0
 
-files=$(git diff --cached --name-only --diff-filter=ACM -- src tests | grep -E '\.(ts|js|json|html)$' || true)
+files=$(git diff --cached --name-only --diff-filter=ACM -- src tests | grep -E '\.(ts|js|json)$' || true)
 [ -z "$files" ] && exit 0
 
 echo "$files" | xargs bunx biome format --write
