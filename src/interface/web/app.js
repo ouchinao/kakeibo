@@ -32,6 +32,7 @@ const els = {
   categories: document.getElementById("categories"),
   txForm: document.getElementById("tx-form"),
   txType: document.getElementById("tx-type"),
+  txDate: document.getElementById("tx-date"),
   txCategoryField: document.getElementById("tx-category-field"),
   txRateField: document.getElementById("tx-rate-field"),
   txRate: document.getElementById("tx-rate"),
@@ -82,6 +83,8 @@ const t = (key, vars) => translate(currentLang, key, vars);
 const categoryLabel = (category) => t(`category.${category}`);
 
 const currentMonth = () => els.month.value;
+/** Today's date as YYYY-MM-DD (used to default the transaction date field). */
+const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /**
  * Thin fetch wrapper that surfaces API error envelopes as thrown errors.
@@ -554,12 +557,15 @@ els.txRate.addEventListener("input", updateRatePreview);
 els.txForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const type = els.txType.value;
+  // Use the picked date (anchored at noon UTC to avoid timezone day-shift);
+  // fall back to today if the field is somehow empty.
+  const date = els.txDate.value || todayIso();
   const payload = {
     type,
     amount: Number(document.getElementById("tx-amount").value),
     currency: currentCurrency,
     note: document.getElementById("tx-note").value || undefined,
-    occurredAt: new Date(`${currentMonth()}-15T12:00:00Z`).toISOString(),
+    occurredAt: new Date(`${date}T12:00:00Z`).toISOString(),
   };
   if (type === "EXPENSE") payload.category = document.getElementById("tx-category").value;
   // Send the base-currency rate for foreign-currency entries.
@@ -567,6 +573,7 @@ els.txForm.addEventListener("submit", async (event) => {
   try {
     await api("/api/transactions", { method: "POST", body: JSON.stringify(payload) });
     els.txForm.reset();
+    els.txDate.value = todayIso(); // reset() clears it; default back to today
     toggleCategoryField();
     updateRatePreview();
     toast(t("toast.txAdded"));
@@ -708,6 +715,7 @@ els.importInput.addEventListener("change", async (event) => {
 // --- Init -------------------------------------------------------------------
 
 els.month.value = new Date().toISOString().slice(0, 7);
+els.txDate.value = todayIso();
 els.lang.value = currentLang;
 setupAmountUnitSuffixes();
 applyStaticTranslations();
